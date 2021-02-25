@@ -13,11 +13,11 @@ from saleor.checkout.models import Checkout
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import TaxError, zero_taxed_money
 from saleor.discount import DiscountInfo
-from ...base_plugin import ConfigurationTypeField
-from ...error_codes import PluginErrorCode
-from .. import _validate_checkout
-from ..plugin import AvataxPlugin
-from . import (
+from saleor.plugins.base_plugin import ConfigurationTypeField
+from saleor.plugins.error_codes import PluginErrorCode
+from saleor.plugins.avatax import _validate_checkout
+from saleor.plugins.avatax.plugin import AvataxPlugin
+from .utils import (
     api_get_request,
     api_post_request,
     generate_request_data_from_checkout,
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from saleor.checkout import CheckoutLineInfo
     from saleor.checkout.models import CheckoutLine
     from saleor.order.models import Order
-    from ...models import PluginConfiguration
+    from saleor.plugins.models import PluginConfiguration
 
 logger = logging.getLogger(__name__)
 
