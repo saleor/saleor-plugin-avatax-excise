@@ -9,10 +9,10 @@ import opentracing.tags
 from django.core.exceptions import ValidationError
 from prices import Money, TaxedMoney
 
-from ....checkout.models import Checkout
-from ....core.prices import quantize_price
-from ....core.taxes import TaxError, zero_taxed_money
-from ....discount import DiscountInfo
+from saleor.checkout.models import Checkout
+from saleor.core.prices import quantize_price
+from saleor.core.taxes import TaxError, zero_taxed_money
+from saleor.discount import DiscountInfo
 from ...base_plugin import ConfigurationTypeField
 from ...error_codes import PluginErrorCode
 from .. import _validate_checkout
@@ -28,11 +28,11 @@ from . import (
 
 if TYPE_CHECKING:
     # flake8: noqa
-    from ....account.models import Address
-    from ....channel.models import Channel
-    from ....checkout import CheckoutLineInfo
-    from ....checkout.models import CheckoutLine
-    from ....order.models import Order
+    from saleor.account.models import Address
+    from saleor.channel.models import Channel
+    from saleor.checkout import CheckoutLineInfo
+    from saleor.checkout.models import CheckoutLine
+    from saleor.order.models import Order
     from ...models import PluginConfiguration
 
 logger = logging.getLogger(__name__)
@@ -123,8 +123,7 @@ class AvataxExcisePlugin(AvataxPlugin):
     def calculate_checkout_total(
         self,
         checkout: "Checkout",
-        lines: Iterable["CheckoutLineInfo"],
-        address: Optional["Address"],
+        lines: Iterable["CheckoutLine"],
         discounts: Iterable[DiscountInfo],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
@@ -133,7 +132,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
         checkout_total = previous_value
 
-        if not _validate_checkout(checkout, [line_info.line for line_info in lines]):
+        if not _validate_checkout(checkout, lines):
             logger.debug("Checkout Invalid in Calculate Checkout Total")
             return checkout_total
 
@@ -159,7 +158,10 @@ class AvataxExcisePlugin(AvataxPlugin):
         total_gross = net + tax
         taxed_total = quantize_price(TaxedMoney(net=net, gross=total_gross), currency)
         total = self._append_prices_of_not_taxed_lines(
-            taxed_total, lines, checkout.channel, discounts
+            # taxed_total, lines, checkout.channel, discounts
+            taxed_total,
+            lines,
+            discounts,
         )
 
         voucher_value = checkout.discount
@@ -171,8 +173,7 @@ class AvataxExcisePlugin(AvataxPlugin):
     def calculate_checkout_subtotal(
         self,
         checkout: "Checkout",
-        lines: Iterable["CheckoutLineInfo"],
-        address: Optional["Address"],
+        lines: Iterable["CheckoutLine"],
         discounts: Iterable[DiscountInfo],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
@@ -181,8 +182,7 @@ class AvataxExcisePlugin(AvataxPlugin):
     def calculate_checkout_shipping(
         self,
         checkout: "Checkout",
-        lines: Iterable["CheckoutLineInfo"],
-        address: Optional["Address"],
+        lines: Iterable["CheckoutLine"],
         discounts: Iterable[DiscountInfo],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
@@ -202,9 +202,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
 
         data = generate_request_data_from_checkout(
-            checkout,
-            transaction_type="RETAIL",
-            discounts=discounts,
+            checkout, transaction_type="RETAIL", discounts=discounts,
         )
         if not data.TransactionLines:
             return previous_value
@@ -260,24 +258,19 @@ class AvataxExcisePlugin(AvataxPlugin):
 
     def calculate_checkout_line_total(
         self,
-        checkout: "Checkout",
-        checkout_line_info: "CheckoutLineInfo",
-        address: Optional["Address"],
-        channel: "Channel",
-        discounts: Iterable["DiscountInfo"],
+        checkout_line: "CheckoutLine",
+        discounts: Iterable[DiscountInfo],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
         if self._skip_plugin(previous_value):
-            # logger.debug("Skip plugin %s", previous_value)
             return previous_value
 
         base_total = previous_value
-        if not checkout_line_info.product.charge_taxes:
-            # logger.debug("Charge taxes is false for this item %s")
+        if not checkout_line.variant.product.charge_taxes:
             return base_total
 
-        if not _validate_checkout(checkout, [checkout_line_info.line]):
-            # logger.debug("Checkout invalid %s")
+        checkout = checkout_line.checkout
+        if not _validate_checkout(checkout, [checkout_line]):
             return base_total
 
         taxes_data = get_checkout_tax_data(checkout, discounts, self.config)
@@ -289,7 +282,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         line_tax_total = Decimal(0)
 
         for line in taxes_data.get("TransactionTaxes", []):
-            if line.get("InvoiceLine") == checkout_line_info.line.id:
+            if line.get("InvoiceLine") == checkout_line.id:
                 line_tax_total += Decimal(line.get("TaxAmount", 0.0))
 
         if not line_tax_total > 0:

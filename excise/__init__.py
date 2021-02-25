@@ -16,9 +16,13 @@ from django.contrib.sites.models import Site
 from django.core.cache import cache
 from requests.auth import HTTPBasicAuth
 
-from ....checkout import base_calculations
-from ....checkout.utils import fetch_checkout_lines
-from ....core.taxes import TaxError
+from saleor.checkout import base_calculations
+
+try:
+    from saleor.checkout.utils import fetch_checkout_lines
+except ImportError:
+    from .compat import fetch_checkout_lines
+from saleor.core.taxes import TaxError
 from .. import (
     CACHE_KEY,
     CACHE_TIME,
@@ -29,10 +33,10 @@ from .. import (
 
 if TYPE_CHECKING:
     # flake8: noqa
-    from ....account.models import Address
-    from ....checkout.models import Checkout, CheckoutLine
-    from ....order.models import Order
-    from ....product.models import (
+    from saleor.account.models import Address
+    from saleor.checkout.models import Checkout, CheckoutLine
+    from saleor.order.models import Order
+    from saleor.product.models import (
         Product,
         ProductType,
         ProductVariant,
@@ -74,12 +78,7 @@ def api_post_request(
             "Content-Type": "application/json",
         }
         formatted_data = json.dumps(data, cls=EnhancedJSONEncoder)
-        response = requests.post(
-            url,
-            headers=headers,
-            auth=auth,
-            data=formatted_data,
-        )
+        response = requests.post(url, headers=headers, auth=auth, data=formatted_data,)
         logger.debug("Hit to Avatax to calculate taxes %s", url)
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
@@ -155,9 +154,7 @@ class TransactionCreateRequestData:
 
 
 def generate_request_data(
-    transaction_type: str,
-    lines: List[TransactionLine],
-    checkout: "Checkout",
+    transaction_type: str, lines: List[TransactionLine], checkout: "Checkout",
 ):
     date = checkout.last_change.strftime("%m/%d/%y")
     data = TransactionCreateRequestData(
@@ -172,9 +169,7 @@ def generate_request_data(
 
 
 def generate_request_data_order(
-    transaction_type: str,
-    lines: List[TransactionLine],
-    order: "Order",
+    transaction_type: str, lines: List[TransactionLine], order: "Order",
 ):
     date = order.created.strftime("%m/%d/%y")
     data = TransactionCreateRequestData(
@@ -195,23 +190,19 @@ def append_line_to_data(
     quantity: int,
     line_amount: Decimal,
     tax_included: bool,
-    variant_channel_listing: "ProductVariantChannelListing",
+    # variant_channel_listing: "ProductVariantChannelListing",
     variant: "ProductVariant",
     shipping_address: "Address",
 ):
     """Abstract line data regardless of Checkout or Order."""
     stock = variant.stocks.for_country(shipping_address.country).first()
     warehouse = stock.warehouse
-    cost_price = (
-        variant_channel_listing.cost_price.amount
-        if variant_channel_listing.cost_price
-        else None
-    )
+    cost_price = variant.cost_price.amount if variant.cost_price else None
     data.append(
         TransactionLine(
             InvoiceLine=line_id,
             ProductCode=variant.sku,
-            UnitPrice=variant_channel_listing.price.amount,
+            UnitPrice=variant.price.amount,
             UnitOfMeasure=variant.product.product_type.get_value_from_private_metadata(
                 get_metadata_key("UnitOfMeasure")
             ),
@@ -273,7 +264,7 @@ def get_checkout_lines_data(
 ) -> List[TransactionLine]:
     data: List[TransactionLine] = []
     lines_info = fetch_checkout_lines(checkout)
-    channel = checkout.channel
+    # channel = checkout.channel
     tax_included = Site.objects.get_current().settings.include_taxes_in_prices
     shipping_address = checkout.shipping_address
     if shipping_address is None:
@@ -282,14 +273,14 @@ def get_checkout_lines_data(
     for line_info in lines_info:
         line_amount = (
             base_calculations.base_checkout_line_total(
-                line_info,
-                channel,
+                line_info.line,
+                # channel,
                 discounts,
             ).gross.amount
             if tax_included
             else base_calculations.base_checkout_line_total(
-                line_info,
-                channel,
+                line_info.line,
+                # channel,
                 discounts,
             ).net.amount
         )
@@ -300,7 +291,7 @@ def get_checkout_lines_data(
             line_info.line.quantity,
             line_amount,
             tax_included,
-            line_info.channel_listing,
+            # line_info.channel_listing,
             line_info.line.variant,
             shipping_address,
         )
@@ -311,7 +302,7 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
 
     data: List[TransactionLine] = []
     order_lines = order.lines.all()
-    channel = order.channel
+    # channel = order.channel
 
     tax_included = Site.objects.get_current().settings.include_taxes_in_prices
     shipping_address = order.shipping_address
@@ -322,7 +313,7 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
         variant = line.variant
         if variant is None:
             continue
-        variant_channel_listing = variant.channel_listings.get(channel=channel)
+        # variant_channel_listing = variant.channel_listings.get(channel=channel)
         line_amount = (
             line.unit_price_gross_amount if tax_included else line.unit_price_net_amount
         )
@@ -332,7 +323,7 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
             line.quantity,
             line_amount,
             tax_included,
-            variant_channel_listing,
+            # variant_channel_listing,
             variant,
             shipping_address,
         )
@@ -345,11 +336,7 @@ def generate_request_data_from_checkout(
     discounts=None,
 ):
     lines = get_checkout_lines_data(checkout, discounts)
-    data = generate_request_data(
-        transaction_type,
-        checkout=checkout,
-        lines=lines,
-    )
+    data = generate_request_data(transaction_type, checkout=checkout, lines=lines,)
     return data
 
 
@@ -359,11 +346,7 @@ def generate_request_data_from_order(
     discounts=None,
 ):
     lines = get_order_lines_data(order, discounts)
-    data = generate_request_data_order(
-        transaction_type,
-        order=order,
-        lines=lines,
-    )
+    data = generate_request_data_order(transaction_type, order=order, lines=lines,)
     return data
 
 
