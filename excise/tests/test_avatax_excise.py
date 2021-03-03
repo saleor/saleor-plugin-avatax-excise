@@ -25,7 +25,7 @@ from saleor.warehouse.models import Warehouse
 from ....manager import get_plugins_manager
 from ....models import PluginConfiguration
 from ... import AvataxConfiguration
-from .. import api_post_request, get_metadata_key
+from ..utils import api_post_request, get_metadata_key
 from ..plugin import AvataxExcisePlugin
 
 
@@ -464,7 +464,9 @@ def test_preprocess_order_creation_wrong_data(
 
 def test_api_post_request_handles_request_errors(product, monkeypatch):
     mocked_response = Mock(side_effect=RequestException())
-    monkeypatch.setattr("saleor.plugins.avatax.excise.requests.post", mocked_response)
+    monkeypatch.setattr(
+        "saleor.plugins.avatax.excise.utils.requests.post", mocked_response
+    )
 
     config = AvataxConfiguration(
         username_or_account="test", password_or_license="test", use_sandbox=False,
@@ -479,7 +481,9 @@ def test_api_post_request_handles_request_errors(product, monkeypatch):
 
 def test_api_post_request_handles_json_errors(product, monkeypatch):
     mocked_response = Mock(side_effect=JSONDecodeError("", "", 0))
-    monkeypatch.setattr("saleor.plugins.avatax.excise.requests.post", mocked_response)
+    monkeypatch.setattr(
+        "saleor.plugins.avatax.excise.utils.requests.post", mocked_response
+    )
 
     config = AvataxConfiguration(
         username_or_account="test", password_or_license="test", use_sandbox=False,

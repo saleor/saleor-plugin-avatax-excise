@@ -153,29 +153,11 @@ class TransactionCreateRequestData:
     InvoiceNumber: Optional[str] = None
 
 
-def generate_request_data(
-    transaction_type: str, lines: List[TransactionLine], checkout: "Checkout",
-):
-    date = checkout.last_change.strftime("%m/%d/%y")
+def generate_request_data(transaction_type: str, lines: List[TransactionLine]):
+    today_date = str(date.today())  # Does not seem timezone safe
     data = TransactionCreateRequestData(
-        EffectiveDate=date,
-        InvoiceDate=date,
-        TitleTransferCode="DEST",
-        TransactionType=transaction_type,
-        TransactionLines=lines,
-    )
-
-    return data
-
-
-def generate_request_data_order(
-    transaction_type: str, lines: List[TransactionLine], order: "Order",
-):
-    date = order.created.strftime("%m/%d/%y")
-    data = TransactionCreateRequestData(
-        EffectiveDate=date,
-        InvoiceDate=date,
-        InvoiceNumber=order.pk,
+        EffectiveDate=today_date,
+        InvoiceDate=today_date,
         TitleTransferCode="DEST",
         TransactionType=transaction_type,
         TransactionLines=lines,
@@ -336,7 +318,7 @@ def generate_request_data_from_checkout(
     discounts=None,
 ):
     lines = get_checkout_lines_data(checkout, discounts)
-    data = generate_request_data(transaction_type, checkout=checkout, lines=lines,)
+    data = generate_request_data(transaction_type, lines=lines,)
     return data
 
 
@@ -346,7 +328,7 @@ def generate_request_data_from_order(
     discounts=None,
 ):
     lines = get_order_lines_data(order, discounts)
-    data = generate_request_data_order(transaction_type, order=order, lines=lines,)
+    data = generate_request_data(transaction_type, lines=lines,)
     return data
 
 
@@ -395,6 +377,12 @@ def get_checkout_tax_data(
 ) -> Dict[str, Any]:
     data = generate_request_data_from_checkout(checkout, discounts=discounts)
     return get_cached_response_or_fetch(data, str(checkout.token), config)
+
+
+def get_order_request_data(order: "Order", transaction_type="RETAIL"):
+    lines = get_order_lines_data(order)
+    data = generate_request_data(transaction_type=transaction_type, lines=lines,)
+    return data
 
 
 def get_order_tax_data(

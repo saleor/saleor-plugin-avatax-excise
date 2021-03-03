@@ -1,5 +1,6 @@
 import json
 import logging
+from dataclasses import asdict
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Iterable, Optional
 from urllib.parse import urljoin
@@ -23,8 +24,9 @@ from .utils import (
     generate_request_data_from_checkout,
     get_api_url,
     get_checkout_tax_data,
-    get_order_tax_data,
+    get_order_request_data,
 )
+from .tasks import api_post_request_task
 
 if TYPE_CHECKING:
     # flake8: noqa
@@ -236,23 +238,18 @@ class AvataxExcisePlugin(AvataxPlugin):
         return previous_value
 
     def order_created(self, order: "Order", previous_value: Any) -> Any:
+        if not self.active:
+            return previous_value
+        request_data = get_order_request_data(order)
 
-        # call the create transactions (similar flow as calculate checkout total)
-        response = get_order_tax_data(order, self.config)
-
-        # TODO handle error if get_order_tax_data fails
-
-        transaction_id = response.get("UserTranId")
-
-        if self.config.autocommit:
-            # call the commit api with the UserTranId
-            commit_url = urljoin(
-                get_api_url(self.config.use_sandbox),
-                f"AvaTaxExcise/transactions/{transaction_id}/commit",
-            )
-            commit_response = api_post_request(commit_url, None, self.config)
-
-            # TODO do something if commit fails
+        # TODO Needed for commit
+        # transaction_id = response.get("UserTranId")
+        transaction_url = urljoin(
+            get_api_url(self.config.use_sandbox), "AvaTaxExcise/transactions/create",
+        )
+        api_post_request_task.delay(
+            transaction_url, asdict(request_data), asdict(self.config), order.id
+        )
 
         return previous_value
 
@@ -276,7 +273,6 @@ class AvataxExcisePlugin(AvataxPlugin):
         taxes_data = get_checkout_tax_data(checkout, discounts, self.config)
 
         if not taxes_data or "Error" in taxes_data["Status"]:
-            logger.debug("Error in tax response %s")
             return base_total
 
         line_tax_total = Decimal(0)
