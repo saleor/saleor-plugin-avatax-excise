@@ -79,10 +79,10 @@ def api_post_request(
         }
         formatted_data = json.dumps(data, cls=EnhancedJSONEncoder)
         response = requests.post(url, headers=headers, auth=auth, data=formatted_data,)
-        logger.debug("Hit to Avatax to calculate taxes %s", url)
+        logger.debug("Hit to Avatax Excise to calculate taxes %s", url)
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
-            logger.exception("Avatax response contains errors %s", json_response)
+            logger.exception("Avatax Excise response contains errors %s", json_response)
             # this is how avatax handles an error in the response
             # is this strict enough with our setup?
             return json_response
@@ -93,7 +93,7 @@ def api_post_request(
     except json.JSONDecodeError:
         content = response.content if response else "Unable to find the response"
         logger.exception(
-            "Unable to decode the response from Avatax. Response: %s", content
+            "Unable to decode the response from Avatax Excise. Response: %s", content
         )
         return {}
     return json_response  # type: ignore
@@ -345,6 +345,7 @@ def _fetch_new_taxes_data(
         span.set_tag(opentracing.tags.COMPONENT, "tax")
         span.set_tag("service.name", "avatax_excise")
         response = api_post_request(transaction_url, data, config)
+        logger.warning(response)
     if response and response.get("Status") == "Success":
         cache.set(data_cache_key, (data, response), CACHE_TIME)
     else:
