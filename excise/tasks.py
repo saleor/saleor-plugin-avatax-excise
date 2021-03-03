@@ -41,7 +41,10 @@ def api_post_request_task(transaction_url, data, config, order_id):
         response = api_post_request(transaction_url, data, config)
     msg = f"Order sent to Avatax Excise. Order ID: {order.token}"
     if not response or "Error" in response.get("Status"):
-        avatax_msg = response.get("error", {}).get("message", "")
+        errors = response.get("TransactionErrors", [])
+        avatax_msg = ""
+        for error in errors:
+            avatax_msg += error.get("ErrorMessage", "")
         msg = f"Unable to send order to Avatax Excise. {avatax_msg}"
         logger.warning(
             "Unable to send order %s to Avatax Excise. Response %s",
