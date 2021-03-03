@@ -72,17 +72,20 @@ def api_post_request(
 ) -> Dict[str, Any]:
     response = None
     try:
-        auth = HTTPBasicAuth(config.username_or_account, config.password_or_license)
+        auth = HTTPBasicAuth(config.username_or_account,
+                             config.password_or_license)
         headers = {
             "x-company-id": config.company_name,
             "Content-Type": "application/json",
         }
         formatted_data = json.dumps(data, cls=EnhancedJSONEncoder)
-        response = requests.post(url, headers=headers, auth=auth, data=formatted_data,)
+        response = requests.post(url, headers=headers,
+                                 auth=auth, data=formatted_data,)
         logger.debug("Hit to Avatax Excise to calculate taxes %s", url)
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
-            logger.exception("Avatax Excise response contains errors %s", json_response)
+            logger.exception(
+                "Avatax Excise response contains errors %s", json_response)
             # this is how avatax handles an error in the response
             # is this strict enough with our setup?
             return json_response
@@ -106,7 +109,6 @@ class TransactionLine:
     UnitPrice: Decimal
     UnitOfMeasure: str
     BilledUnits: Decimal
-    LineAmount: Optional[Decimal]
     AlternateUnitPrice: Optional[Decimal]
     TaxIncluded: bool
     UnitQuantity: Optional[int]
@@ -170,7 +172,6 @@ def append_line_to_data(
     data: List[TransactionLine],
     line_id: int,
     quantity: int,
-    line_amount: Decimal,
     tax_included: bool,
     # variant_channel_listing: "ProductVariantChannelListing",
     variant: "ProductVariant",
@@ -189,7 +190,6 @@ def append_line_to_data(
                 get_metadata_key("UnitOfMeasure")
             ),
             BilledUnits=Decimal(quantity),
-            LineAmount=line_amount,
             AlternateUnitPrice=cost_price,
             TaxIncluded=tax_included,
             UnitQuantity=variant.get_value_from_private_metadata(
@@ -253,25 +253,10 @@ def get_checkout_lines_data(
         raise TaxError("Shipping address required for ATE tax calculation")
 
     for line_info in lines_info:
-        line_amount = (
-            base_calculations.base_checkout_line_total(
-                line_info.line,
-                # channel,
-                discounts,
-            ).gross.amount
-            if tax_included
-            else base_calculations.base_checkout_line_total(
-                line_info.line,
-                # channel,
-                discounts,
-            ).net.amount
-        )
-
         append_line_to_data(
             data,
             line_info.line.id,
             line_info.line.quantity,
-            line_amount,
             tax_included,
             # line_info.channel_listing,
             line_info.line.variant,
@@ -296,14 +281,11 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
         if variant is None:
             continue
         # variant_channel_listing = variant.channel_listings.get(channel=channel)
-        line_amount = (
-            line.unit_price_gross_amount if tax_included else line.unit_price_net_amount
-        )
+
         append_line_to_data(
             data,
             line.id,
             line.quantity,
-            line_amount,
             tax_included,
             # variant_channel_listing,
             variant,
@@ -382,7 +364,8 @@ def get_checkout_tax_data(
 
 def get_order_request_data(order: "Order", transaction_type="RETAIL"):
     lines = get_order_lines_data(order)
-    data = generate_request_data(transaction_type=transaction_type, lines=lines,)
+    data = generate_request_data(
+        transaction_type=transaction_type, lines=lines,)
     return data
 
 
