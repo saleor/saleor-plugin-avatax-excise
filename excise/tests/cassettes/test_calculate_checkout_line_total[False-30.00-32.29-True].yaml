@@ -1,7 +1,7 @@
 interactions:
 - request:
     body: '{"EffectiveDate": "02/22/21", "InvoiceDate": "02/22/21", "TitleTransferCode":
-      "DEST", "TransactionType": "RETAIL", "TransactionLines": [{"InvoiceLine": 1,
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
       "ProductCode": "123", "UnitPrice": "10.000", "UnitOfMeasure": null, "BilledUnits":
       "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
       "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":

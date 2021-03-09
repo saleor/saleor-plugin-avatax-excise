@@ -25,6 +25,7 @@ from .utils import (
     get_api_url,
     get_checkout_tax_data,
     get_order_request_data,
+    TRANSACTION_TYPE,
 )
 from .tasks import api_post_request_task
 
@@ -204,7 +205,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
 
         data = generate_request_data_from_checkout(
-            checkout, transaction_type="RETAIL", discounts=discounts,
+            checkout, transaction_type=TRANSACTION_TYPE, discounts=discounts,
         )
         if not data.TransactionLines:
             return previous_value

@@ -1,7 +1,7 @@
 interactions:
 - request:
     body: '{"EffectiveDate": "02/22/21", "InvoiceDate": "02/22/21", "TitleTransferCode":
-      "DEST", "TransactionType": "RETAIL", "TransactionLines": [{"InvoiceLine": 1,
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
       "ProductCode": "202000000", "UnitPrice": "172.000", "UnitOfMeasure": "PAC",
       "BilledUnits": "1", "LineAmount": "172.00", "AlternateUnitPrice": "1.000", "TaxIncluded":
       false, "UnitQuantity": 25, "UnitQuantityUnitOfMeasure": "EA", "DestinationCountryCode":
@@ -124,7 +124,7 @@ interactions:
       message: OK
 - request:
     body: '{"EffectiveDate": "02/22/21", "InvoiceDate": "02/22/21", "TitleTransferCode":
-      "DEST", "TransactionType": "RETAIL", "TransactionLines": [{"InvoiceLine": 1,
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
       "ProductCode": "202000000", "UnitPrice": "172.000", "UnitOfMeasure": "PAC",
       "BilledUnits": "1", "LineAmount": "172.00", "AlternateUnitPrice": "1.000", "TaxIncluded":
       false, "UnitQuantity": 25, "UnitQuantityUnitOfMeasure": "EA", "DestinationCountryCode":

@@ -46,6 +46,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+TRANSACTION_TYPE = "DIRECT"  # Must be DIRECT for direct to consumer e-commerece
+
+
 def get_metadata_key(key_name: str):
     """Namespace metadata key names: PLUGIN_ID:Key."""
     return "mirumee.taxes.avalara_excise:" + key_name
@@ -72,20 +75,17 @@ def api_post_request(
 ) -> Dict[str, Any]:
     response = None
     try:
-        auth = HTTPBasicAuth(config.username_or_account,
-                             config.password_or_license)
+        auth = HTTPBasicAuth(config.username_or_account, config.password_or_license)
         headers = {
             "x-company-id": config.company_name,
             "Content-Type": "application/json",
         }
         formatted_data = json.dumps(data, cls=EnhancedJSONEncoder)
-        response = requests.post(url, headers=headers,
-                                 auth=auth, data=formatted_data,)
+        response = requests.post(url, headers=headers, auth=auth, data=formatted_data,)
         logger.debug("Hit to Avatax Excise to calculate taxes %s", url)
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
-            logger.exception(
-                "Avatax Excise response contains errors %s", json_response)
+            logger.exception("Avatax Excise response contains errors %s", json_response)
             # this is how avatax handles an error in the response
             # is this strict enough with our setup?
             return json_response
@@ -295,9 +295,7 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
 
 
 def generate_request_data_from_checkout(
-    checkout: "Checkout",
-    transaction_type="RETAIL",  # This field is not well documented in ATE
-    discounts=None,
+    checkout: "Checkout", transaction_type=TRANSACTION_TYPE, discounts=None,
 ):
     lines = get_checkout_lines_data(checkout, discounts)
     data = generate_request_data(transaction_type, lines=lines,)
@@ -305,9 +303,7 @@ def generate_request_data_from_checkout(
 
 
 def generate_request_data_from_order(
-    order: "Order",
-    transaction_type="RETAIL",  # This field is not well documented in ATE
-    discounts=None,
+    order: "Order", transaction_type=TRANSACTION_TYPE, discounts=None,
 ):
     lines = get_order_lines_data(order, discounts)
     data = generate_request_data(transaction_type, lines=lines,)
@@ -362,10 +358,9 @@ def get_checkout_tax_data(
     return get_cached_response_or_fetch(data, str(checkout.token), config)
 
 
-def get_order_request_data(order: "Order", transaction_type="RETAIL"):
+def get_order_request_data(order: "Order", transaction_type=TRANSACTION_TYPE):
     lines = get_order_lines_data(order)
-    data = generate_request_data(
-        transaction_type=transaction_type, lines=lines,)
+    data = generate_request_data(transaction_type=transaction_type, lines=lines,)
     return data
 
 

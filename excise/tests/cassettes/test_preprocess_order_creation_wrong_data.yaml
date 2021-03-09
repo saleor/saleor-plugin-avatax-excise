@@ -1,7 +1,7 @@
 interactions:
 - request:
     body: '{"EffectiveDate": "02/23/21", "InvoiceDate": "02/23/21", "TitleTransferCode":
-      "DEST", "TransactionType": "RETAIL", "TransactionLines": [{"InvoiceLine": 5,
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 5,
       "ProductCode": "123", "UnitPrice": "10.000", "UnitOfMeasure": null, "BilledUnits":
       "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
       "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
@@ -42,7 +42,7 @@ interactions:
         \\\"\\\" is not a valid Destination Jurisdiction for the specified country.\",\r\n
         \     \"ErrorLevelInd\": \"Warning\",\r\n      \"TransactionLine\": 1\r\n
         \   },\r\n    {\r\n      \"SequenceId\": 2,\r\n      \"ErrorCode\": \"-1003\",\r\n
-        \     \"ErrorMessage\": \"No Scenario record found.  TransactionType: RETAIL
+        \     \"ErrorMessage\": \"No Scenario record found.  TransactionType: DIRECT
         OriginJurisdiction: TX OriginCountryCode: USA DestinationJurisdiction:  DestinationCountryCode:
         POL TitleTransferCode: DEST DeterminationProductCategory: 52 SellerId: 0 EffectiveDate:
         02/23/2021 00:00:00 PerspectiveBusinessType:  ChainLeg: \",\r\n      \"ErrorLevelInd\":
