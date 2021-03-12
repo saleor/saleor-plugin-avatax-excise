@@ -8,7 +8,7 @@ from saleor.celeryconf import app
 from saleor.core.taxes import TaxError
 from saleor.order.events import external_notification_event
 from saleor.order.models import Order
-from .utils import AvataxConfiguration, api_post_request
+from .utils import AvataxConfiguration, api_post_request, get_metadata_key
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
     autoretry_for=(TaxError,), retry_backoff=60, retry_kwargs={"max_retries": 5},
 )
 def api_post_request_task(transaction_url, data, config, order_id):
+    logger.debug("***in the task***")
     config = AvataxConfiguration(**config)
     order = Order.objects.filter(id=order_id).first()
     if not order:
@@ -38,6 +39,7 @@ def api_post_request_task(transaction_url, data, config, order_id):
         span = scope.span
         span.set_tag(opentracing.tags.COMPONENT, "tax")
         span.set_tag("service.name", "avatax_excise")
+
         response = api_post_request(transaction_url, data, config)
     msg = f"Order sent to Avatax Excise. Order ID: {order.token}"
     if not response or "Error" in response.get("Status"):
@@ -52,7 +54,7 @@ def api_post_request_task(transaction_url, data, config, order_id):
             response,
         )
 
-    tax_item = {"itemized_taxes": json.dumps(response.get("TransactionTaxes"))}
+    tax_item = {get_metadata_key("itemized_taxes"): json.dumps(response.get("TransactionTaxes"))}
     order.store_value_in_metadata(items=tax_item)
     order.save()
 

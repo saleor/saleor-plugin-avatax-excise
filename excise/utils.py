@@ -17,6 +17,8 @@ from django.core.cache import cache
 from requests.auth import HTTPBasicAuth
 
 from saleor.checkout import base_calculations
+from saleor.checkout.models import Checkout
+
 
 try:
     from saleor.checkout.utils import fetch_checkout_lines
@@ -29,6 +31,7 @@ from saleor.plugins.avatax import (
     AvataxConfiguration,
     api_get_request,
     taxes_need_new_fetch,
+    _retrieve_from_cache
 )
 
 if TYPE_CHECKING:
@@ -155,11 +158,12 @@ class TransactionCreateRequestData:
     InvoiceNumber: Optional[str] = None
 
 
-def generate_request_data(transaction_type: str, lines: List[TransactionLine]):
+def generate_request_data(transaction_type: str, lines: List[TransactionLine], invoice_number: Optional[str]):
     today_date = str(date.today())  # Does not seem timezone safe
     data = TransactionCreateRequestData(
         EffectiveDate=today_date,
         InvoiceDate=today_date,
+        InvoiceNumber=invoice_number,
         TitleTransferCode="DEST",
         TransactionType=transaction_type,
         TransactionLines=lines,
@@ -298,7 +302,7 @@ def generate_request_data_from_checkout(
     checkout: "Checkout", transaction_type=TRANSACTION_TYPE, discounts=None,
 ):
     lines = get_checkout_lines_data(checkout, discounts)
-    data = generate_request_data(transaction_type, lines=lines,)
+    data = generate_request_data(transaction_type, lines=lines, invoice_number=None)
     return data
 
 
@@ -306,7 +310,7 @@ def generate_request_data_from_order(
     order: "Order", transaction_type=TRANSACTION_TYPE, discounts=None,
 ):
     lines = get_order_lines_data(order, discounts)
-    data = generate_request_data(transaction_type, lines=lines,)
+    data = generate_request_data(transaction_type, lines=lines, invoice_number=order.pk,)
     return data
 
 
@@ -323,7 +327,7 @@ def _fetch_new_taxes_data(
         span.set_tag(opentracing.tags.COMPONENT, "tax")
         span.set_tag("service.name", "avatax_excise")
         response = api_post_request(transaction_url, data, config)
-        logger.warning(response)
+        # logger.warning(response)
     if response and response.get("Status") == "Success":
         cache.set(data_cache_key, (data, response), CACHE_TIME)
     else:
@@ -360,7 +364,8 @@ def get_checkout_tax_data(
 
 def get_order_request_data(order: "Order", transaction_type=TRANSACTION_TYPE):
     lines = get_order_lines_data(order)
-    data = generate_request_data(transaction_type=transaction_type, lines=lines,)
+    data = generate_request_data(transaction_type=transaction_type, lines=lines, invoice_number=order.pk,)
+    # print("DATA HERE get_order_request_data", data)
     return data
 
 
@@ -390,3 +395,54 @@ def get_order_tax_data(
                 )
         raise TaxError(customer_msg)
     return response
+
+
+def _retrieve_meta_data_from_cache(token):
+    cached_data = cache.get(token)
+    return cached_data
+
+def metadata_requires_update (
+    metadata: str,
+    token_in_cache: str,
+    force_refresh: bool = False,
+):
+    """Check if Checkout metadata needs to be reset.
+
+    The itemized taxes from ATE are stored in a cache. If an object doesn't exist in cache
+    or something has changed, taxes need to be refetched.
+    """
+    if force_refresh:
+        return True
+
+    cached_metadata = _retrieve_meta_data_from_cache(token_in_cache)
+
+    if not cached_metadata:
+        return True
+
+    if cached_metadata != metadata:
+        return True
+
+    return False
+
+def process_checkout_metadata(
+    metadata: str,
+    checkout_token: str,
+    force_refresh: bool = False,
+    cache_time: int = CACHE_TIME
+):
+    """Check for Checkout metadata in cache.
+
+    Do nothing if metadata are the same. Set new metadata in other cases.
+    """
+    data_cache_key = "checkout_metadata_" + str(checkout_token)
+    tax_item = {get_metadata_key("itemized_taxes"): metadata}
+
+    if metadata_requires_update(tax_item, data_cache_key) or force_refresh:
+        
+        checkout_obj = Checkout.objects.filter(token=checkout_token).first()
+        if checkout_obj:
+            checkout_obj.store_value_in_metadata(items=tax_item)
+            checkout_obj.save()
+            cache.set(data_cache_key, tax_item, cache_time)
+    
+

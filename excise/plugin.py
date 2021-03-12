@@ -26,6 +26,7 @@ from .utils import (
     get_checkout_tax_data,
     get_order_request_data,
     TRANSACTION_TYPE,
+    process_checkout_metadata
 )
 from .tasks import api_post_request_task
 
@@ -148,14 +149,6 @@ class AvataxExcisePlugin(AvataxPlugin):
 
         currency = checkout.currency
 
-        # store itemized tax information in Checkout metadata for optional display on the frontend
-        # if there are no taxes, itemized taxes = []
-        tax_item = {"itemized_taxes": json.dumps(response["TransactionTaxes"])}
-        checkout_obj = Checkout.objects.filter(token=checkout.token).first()
-        if checkout_obj:
-            checkout_obj.store_value_in_metadata(items=tax_item)
-            checkout_obj.save()
-
         tax = Money(Decimal(response.get("TotalTaxAmount", 0.0)), currency)
         net = checkout_total.net
         total_gross = net + tax
@@ -201,6 +194,7 @@ class AvataxExcisePlugin(AvataxPlugin):
 
         Raise an error when can't receive taxes.
         """
+
         if self._skip_plugin(previous_value):
             return previous_value
 
@@ -242,7 +236,6 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not self.active:
             return previous_value
         request_data = get_order_request_data(order)
-
         # TODO Needed for commit
         # transaction_id = response.get("UserTranId")
         transaction_url = urljoin(
@@ -268,6 +261,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             return base_total
 
         checkout = checkout_line.checkout
+
         if not _validate_checkout(checkout, [checkout_line]):
             return base_total
 
@@ -275,6 +269,10 @@ class AvataxExcisePlugin(AvataxPlugin):
 
         if not taxes_data or "Error" in taxes_data["Status"]:
             return base_total
+
+        # store itemized tax information in Checkout metadata for optional display on the frontend
+        tax_meta = json.dumps(taxes_data["TransactionTaxes"])
+        process_checkout_metadata(tax_meta, checkout.token)
 
         line_tax_total = Decimal(0)
 

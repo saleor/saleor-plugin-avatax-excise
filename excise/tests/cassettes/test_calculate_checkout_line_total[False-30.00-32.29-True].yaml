@@ -1,110 +1,542 @@
 interactions:
-- request:
-    body: '{"EffectiveDate": "02/22/21", "InvoiceDate": "02/22/21", "TitleTransferCode":
-      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
-      "ProductCode": "123", "UnitPrice": "10.000", "UnitOfMeasure": null, "BilledUnits":
-      "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
-      "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
-      "USA", "DestinationJurisdiction": "TX", "DestinationAddress1": "1100 Congress
-      Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
-      "Austin", "DestinationPostalCode": "78701", "SaleCountryCode": "USA", "SaleAddress1":
-      "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "TX", "SaleCounty":
-      "", "SaleCity": "Austin", "SalePostalCode": "78701", "OriginCountryCode": "USA",
-      "OriginJurisdiction": "TX", "OriginCounty": "", "OriginCity": "Austin", "OriginPostalCode":
-      "78701", "OriginAddress1": "1100 Congress Ave", "OriginAddress2": "", "CustomString1":
-      null, "CustomString2": null, "CustomString3": null, "CustomNumeric1": null,
-      "CustomNumeric2": null, "CustomNumeric3": null}], "InvoiceNumber": null}'
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Authorization:
-      - Basic Og==
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '1131'
-      Content-Type:
-      - application/json
-      User-Agent:
-      - python-requests/2.25.1
-      x-company-id:
-      - '1337'
-    method: POST
-    uri: https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create
-  response:
-    body:
-      string: "{\r\n  \"UserTranId\": \"b51680c2-6643-4ee4-88bf-143d73f3e24b\",\r\n
-        \ \"TranId\": 38973009,\r\n  \"Status\": \"Success\",\r\n  \"ReturnCode\":
-        0,\r\n  \"TotalTaxAmount\": 2.29,\r\n  \"TransactionTaxes\": [\r\n    {\r\n
-        \     \"TransactionTaxAmounts\": [],\r\n      \"SequenceId\": 1,\r\n      \"TransactionLine\":
-        1,\r\n      \"InvoiceLine\": 1,\r\n      \"CountryCode\": \"USA\",\r\n      \"Jurisdiction\":
-        \"TX\",\r\n      \"LocalJurisdiction\": \"48\",\r\n      \"ProductCategory\":
-        0.0,\r\n      \"TaxingLevel\": \"STA\",\r\n      \"TaxType\": \"S\",\r\n      \"RateType\":
-        \"G\",\r\n      \"RateSubtype\": \"NONE\",\r\n      \"CalculationTypeInd\":
-        \"P\",\r\n      \"TaxRate\": 0.062500,\r\n      \"TaxQuantity\": 0.0,\r\n
-        \     \"TaxAmount\": 1.73,\r\n      \"TaxExemptionInd\": \"N\",\r\n      \"SalesTaxBaseAmount\":
-        27.7100,\r\n      \"LicenseNumber\": \"\",\r\n      \"RateDescription\": \"TX
-        STATE TAX - TEXAS\",\r\n      \"Currency\": \"USD\",\r\n      \"SubtotalInd\":
-        \"C\",\r\n      \"StatusCode\": \"ACTIVE\",\r\n      \"QuantityInd\": \"B\"\r\n
-        \   },\r\n    {\r\n      \"TransactionTaxAmounts\": [],\r\n      \"SequenceId\":
-        2,\r\n      \"TransactionLine\": 1,\r\n      \"InvoiceLine\": 1,\r\n      \"CountryCode\":
-        \"USA\",\r\n      \"Jurisdiction\": \"TX\",\r\n      \"LocalJurisdiction\":
-        \"05000\",\r\n      \"ProductCategory\": 0.0,\r\n      \"TaxingLevel\": \"CIT\",\r\n
-        \     \"TaxType\": \"S\",\r\n      \"RateType\": \"G\",\r\n      \"RateSubtype\":
-        \"NONE\",\r\n      \"CalculationTypeInd\": \"P\",\r\n      \"TaxRate\": 0.010000,\r\n
-        \     \"TaxQuantity\": 0.0,\r\n      \"TaxAmount\": 0.28,\r\n      \"TaxExemptionInd\":
-        \"N\",\r\n      \"SalesTaxBaseAmount\": 27.7100,\r\n      \"LicenseNumber\":
-        \"\",\r\n      \"RateDescription\": \"TX CITY TAX - AUSTIN\",\r\n      \"Currency\":
-        \"USD\",\r\n      \"SubtotalInd\": \"C\",\r\n      \"StatusCode\": \"ACTIVE\",\r\n
-        \     \"QuantityInd\": \"B\"\r\n    },\r\n    {\r\n      \"TransactionTaxAmounts\":
-        [],\r\n      \"SequenceId\": 3,\r\n      \"TransactionLine\": 1,\r\n      \"InvoiceLine\":
-        1,\r\n      \"CountryCode\": \"USA\",\r\n      \"Jurisdiction\": \"TX\",\r\n
-        \     \"LocalJurisdiction\": \"6000814\",\r\n      \"ProductCategory\": 0.0,\r\n
-        \     \"TaxingLevel\": \"STJ\",\r\n      \"TaxType\": \"S\",\r\n      \"RateType\":
-        \"G\",\r\n      \"RateSubtype\": \"NONE\",\r\n      \"CalculationTypeInd\":
-        \"P\",\r\n      \"TaxRate\": 0.010000,\r\n      \"TaxQuantity\": 0.0,\r\n
-        \     \"TaxAmount\": 0.28,\r\n      \"TaxExemptionInd\": \"N\",\r\n      \"SalesTaxBaseAmount\":
-        27.7100,\r\n      \"LicenseNumber\": \"\",\r\n      \"RateDescription\": \"TX
-        SPECIAL TAX - AUSTIN MTA TRANSIT\",\r\n      \"Currency\": \"USD\",\r\n      \"SubtotalInd\":
-        \"C\",\r\n      \"StatusCode\": \"ACTIVE\",\r\n      \"QuantityInd\": \"B\"\r\n
-        \   }\r\n  ],\r\n  \"TransactionErrors\": [],\r\n  \"UserReturnValue\": \"\"\r\n}"
-    headers:
-      Cache-Control:
-      - private
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '2451'
-      Content-Security-Policy:
-      - 'default-src ''self''; font-src ''self'' use.typekit.net fonts.gstatic.com
-        data: ; img-src ''self'' p.typekit.net *.walkme.com *.cloudfront.net data:
-        ; script-src ''self'' ''unsafe-inline'' ''unsafe-eval'' use.typekit.net *.walkme.com
-        *.cloudfront.net; style-src  ''self'' ''unsafe-inline'' use.typekit.net; connect-src
-        ''self'' performance.typekit.net ec.walkme.com; frame-src ''self'' s3.amazonaws.com
-        *.s3.amazonaws.com;'
-      Content-Type:
-      - application/json; charset=utf-8
-      Date:
-      - Mon, 22 Feb 2021 20:23:51 GMT
-      Feature-Policy:
-      - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
-        'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
-        speaker 'none'; vibrate 'none'; fullscreen 'none'; payment 'none';
-      Referrer-Policy:
-      - strict-origin-when-cross-origin
-      Server:
-      - ''
-      Set-Cookie:
-      - ASP.NET_SessionId=cd43qfyvli41i2i2wd4ynlat; path=/; HttpOnly; SameSite=Lax
-      X-Content-Type-Options:
-      - nosniff
-      X-Frame-Options:
-      - sameorigin
-      X-XSS-Protection:
-      - 1; mode=block
-    status:
-      code: 200
-      message: OK
+  - request:
+      body:
+        '{"EffectiveDate": "02/22/21", "InvoiceDate": "02/22/21", "TitleTransferCode":
+        "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
+        "ProductCode": "123", "UnitPrice": "10.000", "UnitOfMeasure": null, "BilledUnits":
+        "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
+        "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
+        "USA", "DestinationJurisdiction": "TX", "DestinationAddress1": "1100 Congress
+        Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
+        "Austin", "DestinationPostalCode": "78701", "SaleCountryCode": "USA", "SaleAddress1":
+        "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "TX", "SaleCounty":
+        "", "SaleCity": "Austin", "SalePostalCode": "78701", "OriginCountryCode": "USA",
+        "OriginJurisdiction": "TX", "OriginCounty": "", "OriginCity": "Austin", "OriginPostalCode":
+        "78701", "OriginAddress1": "1100 Congress Ave", "OriginAddress2": "", "CustomString1":
+        null, "CustomString2": null, "CustomString3": null, "CustomNumeric1": null,
+        "CustomNumeric2": null, "CustomNumeric3": null}], "InvoiceNumber": null}'
+      headers:
+        Accept:
+          - "*/*"
+        Accept-Encoding:
+          - gzip, deflate
+        Authorization:
+          - Basic Og==
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "1131"
+        Content-Type:
+          - application/json
+        User-Agent:
+          - python-requests/2.25.1
+        x-company-id:
+          - "1337"
+      method: POST
+      uri: https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create
+    response:
+      body:
+        string:
+          "{\r\n  \"UserTranId\": \"b51680c2-6643-4ee4-88bf-143d73f3e24b\",\r\n\
+          \  \"TranId\": 38973009,\r\n  \"Status\": \"Success\",\r\n  \"ReturnCode\"\
+          : 0,\r\n  \"TotalTaxAmount\": 2.29,\r\n  \"TransactionTaxes\": [\r\n    {\r\
+          \n      \"TransactionTaxAmounts\": [],\r\n      \"SequenceId\": 1,\r\n   \
+          \   \"TransactionLine\": 1,\r\n      \"InvoiceLine\": 1,\r\n      \"CountryCode\"\
+          : \"USA\",\r\n      \"Jurisdiction\": \"TX\",\r\n      \"LocalJurisdiction\"\
+          : \"48\",\r\n      \"ProductCategory\": 0.0,\r\n      \"TaxingLevel\": \"\
+          STA\",\r\n      \"TaxType\": \"S\",\r\n      \"RateType\": \"G\",\r\n    \
+          \  \"RateSubtype\": \"NONE\",\r\n      \"CalculationTypeInd\": \"P\",\r\n\
+          \      \"TaxRate\": 0.062500,\r\n      \"TaxQuantity\": 0.0,\r\n      \"TaxAmount\"\
+          : 1.73,\r\n      \"TaxExemptionInd\": \"N\",\r\n      \"SalesTaxBaseAmount\"\
+          : 27.7100,\r\n      \"LicenseNumber\": \"\",\r\n      \"RateDescription\"\
+          : \"TX STATE TAX - TEXAS\",\r\n      \"Currency\": \"USD\",\r\n      \"SubtotalInd\"\
+          : \"C\",\r\n      \"StatusCode\": \"ACTIVE\",\r\n      \"QuantityInd\": \"\
+          B\"\r\n    },\r\n    {\r\n      \"TransactionTaxAmounts\": [],\r\n      \"\
+          SequenceId\": 2,\r\n      \"TransactionLine\": 1,\r\n      \"InvoiceLine\"\
+          : 1,\r\n      \"CountryCode\": \"USA\",\r\n      \"Jurisdiction\": \"TX\"\
+          ,\r\n      \"LocalJurisdiction\": \"05000\",\r\n      \"ProductCategory\"\
+          : 0.0,\r\n      \"TaxingLevel\": \"CIT\",\r\n      \"TaxType\": \"S\",\r\n\
+          \      \"RateType\": \"G\",\r\n      \"RateSubtype\": \"NONE\",\r\n      \"\
+          CalculationTypeInd\": \"P\",\r\n      \"TaxRate\": 0.010000,\r\n      \"TaxQuantity\"\
+          : 0.0,\r\n      \"TaxAmount\": 0.28,\r\n      \"TaxExemptionInd\": \"N\",\r\
+          \n      \"SalesTaxBaseAmount\": 27.7100,\r\n      \"LicenseNumber\": \"\"\
+          ,\r\n      \"RateDescription\": \"TX CITY TAX - AUSTIN\",\r\n      \"Currency\"\
+          : \"USD\",\r\n      \"SubtotalInd\": \"C\",\r\n      \"StatusCode\": \"ACTIVE\"\
+          ,\r\n      \"QuantityInd\": \"B\"\r\n    },\r\n    {\r\n      \"TransactionTaxAmounts\"\
+          : [],\r\n      \"SequenceId\": 3,\r\n      \"TransactionLine\": 1,\r\n   \
+          \   \"InvoiceLine\": 1,\r\n      \"CountryCode\": \"USA\",\r\n      \"Jurisdiction\"\
+          : \"TX\",\r\n      \"LocalJurisdiction\": \"6000814\",\r\n      \"ProductCategory\"\
+          : 0.0,\r\n      \"TaxingLevel\": \"STJ\",\r\n      \"TaxType\": \"S\",\r\n\
+          \      \"RateType\": \"G\",\r\n      \"RateSubtype\": \"NONE\",\r\n      \"\
+          CalculationTypeInd\": \"P\",\r\n      \"TaxRate\": 0.010000,\r\n      \"TaxQuantity\"\
+          : 0.0,\r\n      \"TaxAmount\": 0.28,\r\n      \"TaxExemptionInd\": \"N\",\r\
+          \n      \"SalesTaxBaseAmount\": 27.7100,\r\n      \"LicenseNumber\": \"\"\
+          ,\r\n      \"RateDescription\": \"TX SPECIAL TAX - AUSTIN MTA TRANSIT\",\r\
+          \n      \"Currency\": \"USD\",\r\n      \"SubtotalInd\": \"C\",\r\n      \"\
+          StatusCode\": \"ACTIVE\",\r\n      \"QuantityInd\": \"B\"\r\n    }\r\n  ],\r\
+          \n  \"TransactionErrors\": [],\r\n  \"UserReturnValue\": \"\"\r\n}"
+      headers:
+        Cache-Control:
+          - private
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "2451"
+        Content-Security-Policy:
+          - "default-src 'self'; font-src 'self' use.typekit.net fonts.gstatic.com
+            data: ; img-src 'self' p.typekit.net *.walkme.com *.cloudfront.net data:
+            ; script-src 'self' 'unsafe-inline' 'unsafe-eval' use.typekit.net *.walkme.com
+            *.cloudfront.net; style-src  'self' 'unsafe-inline' use.typekit.net; connect-src
+            'self' performance.typekit.net ec.walkme.com; frame-src 'self' s3.amazonaws.com
+            *.s3.amazonaws.com;"
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Mon, 22 Feb 2021 20:23:51 GMT
+        Feature-Policy:
+          - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
+            'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
+            speaker 'none'; vibrate 'none'; fullscreen 'none'; payment 'none';
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+        Server:
+          - ""
+        Set-Cookie:
+          - ASP.NET_SessionId=cd43qfyvli41i2i2wd4ynlat; path=/; HttpOnly; SameSite=Lax
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - sameorigin
+        X-XSS-Protection:
+          - 1; mode=block
+      status:
+        code: 200
+        message: OK
+  - request:
+      body:
+        '{"createTransactionModel": {"companyCode": "test", "type": "SalesOrder",
+        "lines": [{"quantity": 3, "amount": "30.00", "taxCode": "O9999999", "taxIncluded":
+        true, "itemCode": "123", "description": "Test product"}, {"quantity": 1, "amount":
+        "10.000", "taxCode": "FR020100", "taxIncluded": true, "itemCode": "Shipping",
+        "description": null}], "code": "b605fc9d-8838-44b1-b6e1-d30c03b9dfb3", "date":
+        "2021-03-10", "customerCode": 0, "addresses": {"shipFrom": {"line1": "2000 Main
+        Street", "line2": "", "city": "Irvine", "region": "CA", "country": "US", "postalCode":
+        "92614"}, "shipTo": {"line1": "1100 Congress Ave", "line2": "", "city": "Austin",
+        "region": "TX", "country": "US", "postalCode": "78701"}}, "commit": false, "currencyCode":
+        "USD", "email": ""}}'
+      headers:
+        Accept:
+          - "*/*"
+        Accept-Encoding:
+          - gzip, deflate
+        Authorization:
+          - Basic Og==
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "756"
+        User-Agent:
+          - python-requests/2.24.0
+      method: POST
+      uri: https://sandbox-rest.avatax.com/api/v2/transactions/createoradjust
+    response:
+      body:
+        string:
+          '{"error": {"code": "AuthenticationException","message": "Authentication
+          failed.","details": [{"code": "AuthenticationException","message": "Authentication
+          failed.","description": "Missing authentication or unable to authenticate
+          the user or the account.","faultCode": "Client","helpLink": "http://developer.avalara.com/avatax/errors/AuthenticationException"}]}}'
+      headers:
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "361"
+        Content-Type:
+          - application/json
+        Date:
+          - Wed, 10 Mar 2021 19:47:00 GMT
+        X-Content-Type-Options:
+          - nosniff
+      status:
+        code: 401
+        message: Unauthorized
+  - request:
+      body:
+        '{"createTransactionModel": {"companyCode": "1337", "type": "SalesOrder",
+        "lines": [{"quantity": 3, "amount": "30.00", "taxCode": "O9999999", "taxIncluded":
+        true, "itemCode": "123", "description": "Test product"}, {"quantity": 1, "amount":
+        "10.000", "taxCode": "FR020100", "taxIncluded": true, "itemCode": "Shipping",
+        "description": null}], "code": "0245df27-05c9-40ac-a332-7c8aa54e9d49", "date":
+        "2021-03-10", "customerCode": 0, "addresses": {"shipFrom": {"line1": "2000 Main
+        Street", "line2": "", "city": "Irvine", "region": "CA", "country": "US", "postalCode":
+        "92614"}, "shipTo": {"line1": "1100 Congress Ave", "line2": "", "city": "Austin",
+        "region": "TX", "country": "US", "postalCode": "78701"}}, "commit": false, "currencyCode":
+        "USD", "email": ""}}'
+      headers:
+        Accept:
+          - "*/*"
+        Accept-Encoding:
+          - gzip, deflate
+        Authorization:
+          - Basic Og==
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "756"
+        User-Agent:
+          - python-requests/2.24.0
+      method: POST
+      uri: https://sandbox-rest.avatax.com/api/v2/transactions/createoradjust
+    response:
+      body:
+        string:
+          '{"error": {"code": "AuthenticationException","message": "Authentication
+          failed.","details": [{"code": "AuthenticationException","message": "Authentication
+          failed.","description": "Missing authentication or unable to authenticate
+          the user or the account.","faultCode": "Client","helpLink": "http://developer.avalara.com/avatax/errors/AuthenticationException"}]}}'
+      headers:
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "361"
+        Content-Type:
+          - application/json
+        Date:
+          - Wed, 10 Mar 2021 19:49:04 GMT
+        X-Content-Type-Options:
+          - nosniff
+      status:
+        code: 401
+        message: Unauthorized
+  - request:
+      body:
+        '{"createTransactionModel": {"companyCode": "1337", "type": "SalesOrder",
+        "lines": [{"quantity": 3, "amount": "30.00", "taxCode": "O9999999", "taxIncluded":
+        true, "itemCode": "123", "description": "Test product"}, {"quantity": 1, "amount":
+        "10.000", "taxCode": "FR020100", "taxIncluded": true, "itemCode": "Shipping",
+        "description": null}], "code": "f35715a3-29a1-4643-a6cb-b0b72cc1f80e", "date":
+        "2021-03-10", "customerCode": 0, "addresses": {"shipFrom": {"line1": "2000 Main
+        Street", "line2": "", "city": "Irvine", "region": "CA", "country": "US", "postalCode":
+        "92614"}, "shipTo": {"line1": "1100 Congress Ave", "line2": "", "city": "Austin",
+        "region": "TX", "country": "US", "postalCode": "78701"}}, "commit": false, "currencyCode":
+        "USD", "email": ""}}'
+      headers:
+        Accept:
+          - "*/*"
+        Accept-Encoding:
+          - gzip, deflate
+        Authorization:
+          - Basic Og==
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "756"
+        User-Agent:
+          - python-requests/2.24.0
+      method: POST
+      uri: https://sandbox-rest.avatax.com/api/v2/transactions/createoradjust
+    response:
+      body:
+        string:
+          '{"error": {"code": "AuthenticationException","message": "Authentication
+          failed.","details": [{"code": "AuthenticationException","message": "Authentication
+          failed.","description": "Missing authentication or unable to authenticate
+          the user or the account.","faultCode": "Client","helpLink": "http://developer.avalara.com/avatax/errors/AuthenticationException"}]}}'
+      headers:
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "361"
+        Content-Type:
+          - application/json
+        Date:
+          - Wed, 10 Mar 2021 19:53:00 GMT
+        X-Content-Type-Options:
+          - nosniff
+      status:
+        code: 401
+        message: Unauthorized
+  - request:
+      body:
+        '{"EffectiveDate": "2021-03-11", "InvoiceDate": "2021-03-11", "TitleTransferCode":
+        "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
+        "ProductCode": "123", "UnitPrice": "10.000", "UnitOfMeasure": null, "BilledUnits":
+        "3", "AlternateUnitPrice": "1.000", "TaxIncluded": true, "UnitQuantity": null,
+        "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode": "USA", "DestinationJurisdiction":
+        "TX", "DestinationAddress1": "1100 Congress Ave", "DestinationAddress2": "",
+        "DestinationCounty": "", "DestinationCity": "Austin", "DestinationPostalCode":
+        "78701", "SaleCountryCode": "USA", "SaleAddress1": "1100 Congress Ave", "SaleAddress2":
+        "", "SaleJurisdiction": "TX", "SaleCounty": "", "SaleCity": "Austin", "SalePostalCode":
+        "78701", "OriginCountryCode": "USA", "OriginJurisdiction": "TX", "OriginCounty":
+        "", "OriginCity": "Austin", "OriginPostalCode": "78701", "OriginAddress1": "1100
+        Congress Ave", "OriginAddress2": "", "CustomString1": null, "CustomString2":
+        null, "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2": null,
+        "CustomNumeric3": null}], "InvoiceNumber": null}'
+      headers:
+        Accept:
+          - "*/*"
+        Accept-Encoding:
+          - gzip, deflate
+        Authorization:
+          - Basic Og==
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "1112"
+        Content-Type:
+          - application/json
+        User-Agent:
+          - python-requests/2.24.0
+        x-company-id:
+          - "1337"
+      method: POST
+      uri: https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create
+    response:
+      body:
+        string:
+          "{\r\n  \"UserTranId\": \"\",\r\n  \"TranId\": 39172404,\r\n  \"Status\"\
+          : \"Errors found\",\r\n  \"ReturnCode\": -1,\r\n  \"TotalTaxAmount\": 0.0,\r\
+          \n  \"TransactionTaxes\": [],\r\n  \"TransactionErrors\": [\r\n    {\r\n \
+          \     \"SequenceId\": 1,\r\n      \"ErrorCode\": \"-1003\",\r\n      \"ErrorMessage\"\
+          : \"No Scenario record found.  TransactionType: DIRECT OriginJurisdiction:\
+          \ TX OriginCountryCode: USA DestinationJurisdiction: TX DestinationCountryCode:\
+          \ USA TitleTransferCode: DEST DeterminationProductCategory: 52 SellerId: 0\
+          \ EffectiveDate: 03/11/2021 00:00:00 PerspectiveBusinessType:  ChainLeg: \"\
+          ,\r\n      \"ErrorLevelInd\": \"Critical\",\r\n      \"TransactionLine\":\
+          \ 1\r\n    }\r\n  ],\r\n  \"UserReturnValue\": \"\"\r\n}"
+      headers:
+        Cache-Control:
+          - private
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "659"
+        Content-Security-Policy:
+          - "default-src 'self'; font-src 'self' use.typekit.net fonts.gstatic.com
+            data: ; img-src 'self' p.typekit.net *.walkme.com *.cloudfront.net data:
+            ; script-src 'self' 'unsafe-inline' 'unsafe-eval' use.typekit.net *.walkme.com
+            *.cloudfront.net; style-src  'self' 'unsafe-inline' use.typekit.net; connect-src
+            'self' performance.typekit.net ec.walkme.com; frame-src 'self' s3.amazonaws.com
+            *.s3.amazonaws.com;"
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Thu, 11 Mar 2021 19:45:54 GMT
+        Feature-Policy:
+          - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
+            'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
+            speaker 'none'; vibrate 'none'; fullscreen 'none'; payment 'none';
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+        Server:
+          - ""
+        Set-Cookie:
+          - ASP.NET_SessionId=xcjxrw3ypqs3ieov1x5bcaj2; path=/; HttpOnly; SameSite=Lax
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - sameorigin
+        X-XSS-Protection:
+          - 1; mode=block
+      status:
+        code: 200
+        message: OK
+  - request:
+      body:
+        '{"EffectiveDate": "2021-03-11", "InvoiceDate": "2021-03-11", "TitleTransferCode":
+        "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
+        "ProductCode": "123", "UnitPrice": "10.000", "UnitOfMeasure": null, "BilledUnits":
+        "3", "AlternateUnitPrice": "1.000", "TaxIncluded": true, "UnitQuantity": null,
+        "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode": "USA", "DestinationJurisdiction":
+        "TX", "DestinationAddress1": "1100 Congress Ave", "DestinationAddress2": "",
+        "DestinationCounty": "", "DestinationCity": "Austin", "DestinationPostalCode":
+        "78701", "SaleCountryCode": "USA", "SaleAddress1": "1100 Congress Ave", "SaleAddress2":
+        "", "SaleJurisdiction": "TX", "SaleCounty": "", "SaleCity": "Austin", "SalePostalCode":
+        "78701", "OriginCountryCode": "USA", "OriginJurisdiction": "TX", "OriginCounty":
+        "", "OriginCity": "Austin", "OriginPostalCode": "78701", "OriginAddress1": "1100
+        Congress Ave", "OriginAddress2": "", "CustomString1": null, "CustomString2":
+        null, "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2": null,
+        "CustomNumeric3": null}], "InvoiceNumber": null}'
+      headers:
+        Accept:
+          - "*/*"
+        Accept-Encoding:
+          - gzip, deflate
+        Authorization:
+          - Basic Og==
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "1112"
+        Content-Type:
+          - application/json
+        User-Agent:
+          - python-requests/2.24.0
+        x-company-id:
+          - "1337"
+      method: POST
+      uri: https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create
+    response:
+      body:
+        string:
+          "{\r\n  \"UserTranId\": \"\",\r\n  \"TranId\": 39172420,\r\n  \"Status\"\
+          : \"Errors found\",\r\n  \"ReturnCode\": -1,\r\n  \"TotalTaxAmount\": 0.0,\r\
+          \n  \"TransactionTaxes\": [],\r\n  \"TransactionErrors\": [\r\n    {\r\n \
+          \     \"SequenceId\": 1,\r\n      \"ErrorCode\": \"-1003\",\r\n      \"ErrorMessage\"\
+          : \"No Scenario record found.  TransactionType: DIRECT OriginJurisdiction:\
+          \ TX OriginCountryCode: USA DestinationJurisdiction: TX DestinationCountryCode:\
+          \ USA TitleTransferCode: DEST DeterminationProductCategory: 52 SellerId: 0\
+          \ EffectiveDate: 03/11/2021 00:00:00 PerspectiveBusinessType:  ChainLeg: \"\
+          ,\r\n      \"ErrorLevelInd\": \"Critical\",\r\n      \"TransactionLine\":\
+          \ 1\r\n    }\r\n  ],\r\n  \"UserReturnValue\": \"\"\r\n}"
+      headers:
+        Cache-Control:
+          - private
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "659"
+        Content-Security-Policy:
+          - "default-src 'self'; font-src 'self' use.typekit.net fonts.gstatic.com
+            data: ; img-src 'self' p.typekit.net *.walkme.com *.cloudfront.net data:
+            ; script-src 'self' 'unsafe-inline' 'unsafe-eval' use.typekit.net *.walkme.com
+            *.cloudfront.net; style-src  'self' 'unsafe-inline' use.typekit.net; connect-src
+            'self' performance.typekit.net ec.walkme.com; frame-src 'self' s3.amazonaws.com
+            *.s3.amazonaws.com;"
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Thu, 11 Mar 2021 19:47:36 GMT
+        Feature-Policy:
+          - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
+            'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
+            speaker 'none'; vibrate 'none'; fullscreen 'none'; payment 'none';
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+        Server:
+          - ""
+        Set-Cookie:
+          - ASP.NET_SessionId=dwiiw04g15lmhmltqhw0k01d; path=/; HttpOnly; SameSite=Lax
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - sameorigin
+        X-XSS-Protection:
+          - 1; mode=block
+      status:
+        code: 200
+        message: OK
+  - request:
+      body:
+        '{"EffectiveDate": "2021-03-11", "InvoiceDate": "2021-03-11", "TitleTransferCode":
+        "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
+        "ProductCode": "123", "UnitPrice": "10.000", "UnitOfMeasure": null, "BilledUnits":
+        "3", "AlternateUnitPrice": "1.000", "TaxIncluded": true, "UnitQuantity": null,
+        "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode": "USA", "DestinationJurisdiction":
+        "TX", "DestinationAddress1": "1100 Congress Ave", "DestinationAddress2": "",
+        "DestinationCounty": "", "DestinationCity": "Austin", "DestinationPostalCode":
+        "78701", "SaleCountryCode": "USA", "SaleAddress1": "1100 Congress Ave", "SaleAddress2":
+        "", "SaleJurisdiction": "TX", "SaleCounty": "", "SaleCity": "Austin", "SalePostalCode":
+        "78701", "OriginCountryCode": "USA", "OriginJurisdiction": "TX", "OriginCounty":
+        "", "OriginCity": "Austin", "OriginPostalCode": "78701", "OriginAddress1": "1100
+        Congress Ave", "OriginAddress2": "", "CustomString1": null, "CustomString2":
+        null, "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2": null,
+        "CustomNumeric3": null}], "InvoiceNumber": null}'
+      headers:
+        Accept:
+          - "*/*"
+        Accept-Encoding:
+          - gzip, deflate
+        Authorization:
+          - Basic Og==
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "1112"
+        Content-Type:
+          - application/json
+        User-Agent:
+          - python-requests/2.24.0
+        x-company-id:
+          - "1337"
+      method: POST
+      uri: https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create
+    response:
+      body:
+        string:
+          "{\r\n  \"UserTranId\": \"9baffcd2-eab0-47b0-a08b-08f60ee9faac\",\r\n\
+          \  \"TranId\": 39172444,\r\n  \"Status\": \"Success\",\r\n  \"ReturnCode\"\
+          : 0,\r\n  \"TotalTaxAmount\": 2.29,\r\n  \"TransactionTaxes\": [\r\n    {\r\
+          \n      \"TransactionTaxAmounts\": [],\r\n      \"SequenceId\": 1,\r\n   \
+          \   \"TransactionLine\": 1,\r\n      \"InvoiceLine\": 1,\r\n      \"CountryCode\"\
+          : \"USA\",\r\n      \"Jurisdiction\": \"TX\",\r\n      \"LocalJurisdiction\"\
+          : \"48\",\r\n      \"ProductCategory\": 0.0,\r\n      \"TaxingLevel\": \"\
+          STA\",\r\n      \"TaxType\": \"S\",\r\n      \"RateType\": \"G\",\r\n    \
+          \  \"RateSubtype\": \"NONE\",\r\n      \"CalculationTypeInd\": \"P\",\r\n\
+          \      \"TaxRate\": 0.062500,\r\n      \"TaxQuantity\": 0.0,\r\n      \"TaxAmount\"\
+          : 1.73,\r\n      \"TaxExemptionInd\": \"N\",\r\n      \"SalesTaxBaseAmount\"\
+          : 27.7100,\r\n      \"LicenseNumber\": \"\",\r\n      \"RateDescription\"\
+          : \"TX STATE TAX - TEXAS\",\r\n      \"Currency\": \"USD\",\r\n      \"SubtotalInd\"\
+          : \"C\",\r\n      \"StatusCode\": \"ACTIVE\",\r\n      \"QuantityInd\": \"\
+          B\"\r\n    },\r\n    {\r\n      \"TransactionTaxAmounts\": [],\r\n      \"\
+          SequenceId\": 2,\r\n      \"TransactionLine\": 1,\r\n      \"InvoiceLine\"\
+          : 1,\r\n      \"CountryCode\": \"USA\",\r\n      \"Jurisdiction\": \"TX\"\
+          ,\r\n      \"LocalJurisdiction\": \"05000\",\r\n      \"ProductCategory\"\
+          : 0.0,\r\n      \"TaxingLevel\": \"CIT\",\r\n      \"TaxType\": \"S\",\r\n\
+          \      \"RateType\": \"G\",\r\n      \"RateSubtype\": \"NONE\",\r\n      \"\
+          CalculationTypeInd\": \"P\",\r\n      \"TaxRate\": 0.010000,\r\n      \"TaxQuantity\"\
+          : 0.0,\r\n      \"TaxAmount\": 0.28,\r\n      \"TaxExemptionInd\": \"N\",\r\
+          \n      \"SalesTaxBaseAmount\": 27.7100,\r\n      \"LicenseNumber\": \"\"\
+          ,\r\n      \"RateDescription\": \"TX CITY TAX - AUSTIN\",\r\n      \"Currency\"\
+          : \"USD\",\r\n      \"SubtotalInd\": \"C\",\r\n      \"StatusCode\": \"ACTIVE\"\
+          ,\r\n      \"QuantityInd\": \"B\"\r\n    },\r\n    {\r\n      \"TransactionTaxAmounts\"\
+          : [],\r\n      \"SequenceId\": 3,\r\n      \"TransactionLine\": 1,\r\n   \
+          \   \"InvoiceLine\": 1,\r\n      \"CountryCode\": \"USA\",\r\n      \"Jurisdiction\"\
+          : \"TX\",\r\n      \"LocalJurisdiction\": \"6000814\",\r\n      \"ProductCategory\"\
+          : 0.0,\r\n      \"TaxingLevel\": \"STJ\",\r\n      \"TaxType\": \"S\",\r\n\
+          \      \"RateType\": \"G\",\r\n      \"RateSubtype\": \"NONE\",\r\n      \"\
+          CalculationTypeInd\": \"P\",\r\n      \"TaxRate\": 0.010000,\r\n      \"TaxQuantity\"\
+          : 0.0,\r\n      \"TaxAmount\": 0.28,\r\n      \"TaxExemptionInd\": \"N\",\r\
+          \n      \"SalesTaxBaseAmount\": 27.7100,\r\n      \"LicenseNumber\": \"\"\
+          ,\r\n      \"RateDescription\": \"TX SPECIAL TAX - AUSTIN MTA TRANSIT\",\r\
+          \n      \"Currency\": \"USD\",\r\n      \"SubtotalInd\": \"C\",\r\n      \"\
+          StatusCode\": \"ACTIVE\",\r\n      \"QuantityInd\": \"B\"\r\n    }\r\n  ],\r\
+          \n  \"TransactionErrors\": [],\r\n  \"UserReturnValue\": \"\"\r\n}"
+      headers:
+        Cache-Control:
+          - private
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "2451"
+        Content-Security-Policy:
+          - "default-src 'self'; font-src 'self' use.typekit.net fonts.gstatic.com
+            data: ; img-src 'self' p.typekit.net *.walkme.com *.cloudfront.net data:
+            ; script-src 'self' 'unsafe-inline' 'unsafe-eval' use.typekit.net *.walkme.com
+            *.cloudfront.net; style-src  'self' 'unsafe-inline' use.typekit.net; connect-src
+            'self' performance.typekit.net ec.walkme.com; frame-src 'self' s3.amazonaws.com
+            *.s3.amazonaws.com;"
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Thu, 11 Mar 2021 19:48:39 GMT
+        Feature-Policy:
+          - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
+            'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
+            speaker 'none'; vibrate 'none'; fullscreen 'none'; payment 'none';
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+        Server:
+          - ""
+        Set-Cookie:
+          - ASP.NET_SessionId=zngh5fkzilcmxfhp5pnd4btv; path=/; HttpOnly; SameSite=Lax
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - sameorigin
+        X-XSS-Protection:
+          - 1; mode=block
+      status:
+        code: 200
+        message: OK
 version: 1
