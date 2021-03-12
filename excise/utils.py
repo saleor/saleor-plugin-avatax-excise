@@ -365,7 +365,6 @@ def get_checkout_tax_data(
 def get_order_request_data(order: "Order", transaction_type=TRANSACTION_TYPE):
     lines = get_order_lines_data(order)
     data = generate_request_data(transaction_type=transaction_type, lines=lines, invoice_number=order.pk,)
-    # print("DATA HERE get_order_request_data", data)
     return data
 
 
