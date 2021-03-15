@@ -12,12 +12,7 @@ from prices import Money, TaxedMoney
 from requests import RequestException
 from dataclasses import asdict
 
-
-# from saleor.shipping.models import ShippingMethodChannelListing
-
 from saleor.account.models import Address
-
-# from saleor.checkout import CheckoutLineInfo
 from saleor.checkout.models import CheckoutLine, Checkout
 from saleor.checkout.utils import add_variant_to_checkout
 from ..compat import fetch_checkout_lines
@@ -96,7 +91,8 @@ def warehouse(address_usa_tx, shipping_zone):
 
 @pytest.fixture
 def reset_sequences():
-    sequence_sql = connection.ops.sequence_reset_sql(no_style(), [CheckoutLine])
+    sequence_sql = connection.ops.sequence_reset_sql(
+        no_style(), [CheckoutLine])
     with connection.cursor() as cursor:
         for sql in sequence_sql:
             cursor.execute(sql)
@@ -104,7 +100,8 @@ def reset_sequences():
 
 @patch("saleor.plugins.avatax.excise.plugin.api_get_request")
 def test_save_plugin_configuration(api_get_request_mock, settings):
-    settings.PLUGINS = ["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+    settings.PLUGINS = [
+        "saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
     api_get_request_mock.return_value = {"authenticated": True}
     manager = get_plugins_manager()
     manager.save_plugin_configuration(
@@ -117,7 +114,8 @@ def test_save_plugin_configuration(api_get_request_mock, settings):
             ],
         },
     )
-    manager.save_plugin_configuration(AvataxExcisePlugin.PLUGIN_ID, {"active": True})
+    manager.save_plugin_configuration(
+        AvataxExcisePlugin.PLUGIN_ID, {"active": True})
     plugin_configuration = PluginConfiguration.objects.get(
         identifier=AvataxExcisePlugin.PLUGIN_ID
     )
@@ -125,7 +123,8 @@ def test_save_plugin_configuration(api_get_request_mock, settings):
 
 
 def test_save_plugin_configuration_invalid(settings):
-    settings.PLUGINS = ["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+    settings.PLUGINS = [
+        "saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
     manager = get_plugins_manager()
     with pytest.raises(ValidationError):
         manager.save_plugin_configuration(
@@ -148,7 +147,8 @@ def test_save_plugin_configuration_invalid(settings):
 def test_save_plugin_configuration_authentication_failed(
     api_get_request_mock, settings
 ):
-    settings.PLUGINS = ["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+    settings.PLUGINS = [
+        "saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
     api_get_request_mock.return_value = {"authenticated": False}
     manager = get_plugins_manager()
 
@@ -164,7 +164,6 @@ def test_save_plugin_configuration_authentication_failed(
             },
         )
     assert e._excinfo[1].args[0] == "Authentication failed. Please check provided data."
-    # manager.save_plugin_configuration(AvataxExcisePlugin.PLUGIN_ID, {"active": True})
     plugin_configuration = PluginConfiguration.objects.get(
         identifier=AvataxExcisePlugin.PLUGIN_ID
     )
@@ -174,7 +173,7 @@ def test_save_plugin_configuration_authentication_failed(
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "with_discount, expected_net, expected_gross, taxes_in_prices",
-    [(False, "30.00", "32.29", True),],
+    [(False, "30.00", "32.29", True), ],
 )
 @override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
 def test_calculate_checkout_line_total(
@@ -206,28 +205,18 @@ def test_calculate_checkout_line_total(
     product.save()
     product.product_type.save()
     discounts = [discount_info] if with_discount else None
-    # channel = checkout_with_item.channel
-    # channel_listing = line.variant.channel_listings.get(channel=channel)
-
-    # checkout_line_info = CheckoutLineInfo(
-    #     line=line,
-    #     variant=line.variant,
-    #     channel_listing=channel_listing,
-    #     product=line.variant.product,
-    #     collections=[],
-    # )
     line = checkout_with_item.lines.first()
-
     total = manager.calculate_checkout_line_total(line, discounts,)
     total = quantize_price(total, total.currency)
     assert total == TaxedMoney(
         net=Money(expected_net, "USD"), gross=Money(expected_gross, "USD")
     )
 
+
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "with_discount, expected_net, expected_gross, taxes_in_prices",
-    [(False, "30.00", "32.29", True),],
+    [(False, "30.00", "32.29", True), ],
 )
 @override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
 def test_calculate_checkout_line_total_metadata(
@@ -255,20 +244,10 @@ def test_calculate_checkout_line_total_metadata(
     site_settings.save()
     line = checkout_with_item.lines.first()
     product = line.variant.product
-    product.metadata = {}  # TODO consider adding ATE fields here
+    product.metadata = {}
     product.save()
     product.product_type.save()
     discounts = [discount_info] if with_discount else None
-    # channel = checkout_with_item.channel
-    # channel_listing = line.variant.channel_listings.get(channel=channel)
-
-    # checkout_line_info = CheckoutLineInfo(
-    #     line=line,
-    #     variant=line.variant,
-    #     channel_listing=channel_listing,
-    #     product=line.variant.product,
-    #     collections=[],
-    # )
     line = checkout_with_item.lines.first()
 
     manager.calculate_checkout_line_total(line, discounts,)
@@ -280,7 +259,7 @@ def test_calculate_checkout_line_total_metadata(
 @pytest.mark.vcr
 @pytest.mark.parametrize(
     "with_discount, expected_net, expected_gross, voucher_amount, taxes_in_prices",
-    [(False, "43.98", "48.95", "0.0", False),],
+    [(False, "43.98", "48.95", "0.0", False), ],
 )
 @override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
 def test_calculate_checkout_total(
@@ -362,7 +341,8 @@ def test_calculate_checkout_total_invalid_checkout(
     plugin_configuration()
     manager = get_plugins_manager()
     total = manager.calculate_checkout_total(checkout_with_item, [], [])
-    assert total == TaxedMoney(net=Money("0.00", "USD"), gross=Money("0.00", "USD"))
+    assert total == TaxedMoney(
+        net=Money("0.00", "USD"), gross=Money("0.00", "USD"))
 
 
 @pytest.mark.vcr
@@ -434,9 +414,6 @@ def test_calculate_checkout_total_excise_data(
     checkout.shipping_address = address_usa
     checkout.billing_address = address_usa
     shipping_method = shipping_zone.shipping_methods.get()
-    # ShippingMethodChannelListing.objects.filter(shipping_method=shipping_method).update(
-    #     price_amount=0
-    # )
     shipping_method.price_amount = 0
     shipping_method.save()
     checkout.shipping_method = shipping_method
@@ -454,10 +431,6 @@ def test_calculate_checkout_total_excise_data(
     variant = product.variants.get()
     variant.sku = variant_sku
     variant.private_metadata = metadata
-    variant.save()
-    # listing = variant.channel_listings.first()
-    # listing.price_amount = Decimal(price)
-    # listing.save()
     variant.price_amount = Decimal(price)
     variant.save()
     add_variant_to_checkout(checkout, variant, 1)
@@ -496,6 +469,7 @@ def test_preprocess_order_creation(
     checkout_with_item.save()
     discounts = [discount_info]
     manager.preprocess_order_creation(checkout_with_item, discounts)
+
 
 @pytest.mark.vcr
 @override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
@@ -572,11 +546,8 @@ def test_order_created_calls_task(
     order_with_lines.shipping_method = shipping_zone.shipping_methods.get()
     order_with_lines.save()
 
-
-    # when
     manager.order_created(order_with_lines)
 
-    # then 
     transaction_url = "https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create"
     data = get_order_request_data(order_with_lines)
     conf = {
@@ -584,14 +555,15 @@ def test_order_created_calls_task(
     }
     configuration = {
         'username_or_account': conf["Username or account"],
-        'password_or_license': conf["Password or license"], 'use_sandbox': True, 
-        'company_name': conf["Company name"], 
+        'password_or_license': conf["Password or license"], 'use_sandbox': True,
+        'company_name': conf["Company name"],
         'autocommit': False
     }
 
     api_post_request_task_mock.assert_called_once_with(
         transaction_url, asdict(data), configuration, order_with_lines.id
     )
+
 
 @pytest.mark.vcr
 @override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
@@ -613,9 +585,6 @@ def test_order_created(
     order_with_lines.shipping_address = address_usa_tx
     order_with_lines.shipping_method = shipping_zone.shipping_methods.get()
     shipping_method = shipping_zone.shipping_methods.get()
-    # ShippingMethodChannelListing.objects.filter(shipping_method=shipping_method).update(
-    #     price_amount=0
-    # )
     shipping_method.price_amount = 0
     shipping_method.save()
     order_with_lines.shipping_method = shipping_method
@@ -625,11 +594,6 @@ def test_order_created(
 
     variant = product.variants.first()
     variant.sku = "202015500"
-    variant.save()
-
-    # listing = variant.channel_listings.first()
-    # listing.price_amount = Decimal(170)
-    # listing.save()
     variant.price_amount = Decimal(170)
     variant.save()
 

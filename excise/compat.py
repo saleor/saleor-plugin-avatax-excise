@@ -29,14 +29,6 @@ def fetch_checkout_lines(checkout: "Checkout") -> Iterable[CheckoutLineInfo]:
         collections = list(product.collections.all())
 
         variant_channel_listing = None
-        # for channel_listing in Vline.variant.channel_listings.all():
-        #     if channel_listing.channel_id == checkout.channel_id:
-        #         variant_channel_listing = channel_listing
-
-        # FIXME: Temporary solution to pass type checks. Figure out how to handle case
-        # when variant channel listing is not defined for a checkout line.
-        # if not variant_channel_listing:
-        #     continue
 
         lines_info.append(
             CheckoutLineInfo(
