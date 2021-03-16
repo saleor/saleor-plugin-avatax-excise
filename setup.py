@@ -1,8 +1,6 @@
 from setuptools import setup
 
-install_requires = [
-    "lib==0.15.3",
-]
+install_requires = []
 
 setup(
     name="saleor-avalara-excise",
