@@ -78,19 +78,20 @@ def api_post_request(
 ) -> Dict[str, Any]:
     response = None
     try:
-        auth = HTTPBasicAuth(config.username_or_account, config.password_or_license)
+        auth = HTTPBasicAuth(config.username_or_account,
+                             config.password_or_license)
         headers = {
             "x-company-id": config.company_name,
             "Content-Type": "application/json",
         }
         formatted_data = json.dumps(data, cls=EnhancedJSONEncoder)
-        response = requests.post(url, headers=headers, auth=auth, data=formatted_data,)
+        response = requests.post(url, headers=headers,
+                                 auth=auth, data=formatted_data,)
         logger.debug("Hit to Avatax Excise to calculate taxes %s", url)
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
-            logger.exception("Avatax Excise response contains errors %s", json_response)
-            # this is how avatax handles an error in the response
-            # is this strict enough with our setup?
+            logger.exception(
+                "Avatax Excise response contains errors %s", json_response)
             return json_response
 
     except requests.exceptions.RequestException:
@@ -177,7 +178,6 @@ def append_line_to_data(
     line_id: int,
     quantity: int,
     tax_included: bool,
-    # variant_channel_listing: "ProductVariantChannelListing",
     variant: "ProductVariant",
     shipping_address: "Address",
 ):
@@ -250,7 +250,6 @@ def get_checkout_lines_data(
 ) -> List[TransactionLine]:
     data: List[TransactionLine] = []
     lines_info = fetch_checkout_lines(checkout)
-    # channel = checkout.channel
     tax_included = Site.objects.get_current().settings.include_taxes_in_prices
     shipping_address = checkout.shipping_address
     if shipping_address is None:
@@ -262,7 +261,6 @@ def get_checkout_lines_data(
             line_info.line.id,
             line_info.line.quantity,
             tax_included,
-            # line_info.channel_listing,
             line_info.line.variant,
             shipping_address,
         )
@@ -273,7 +271,6 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
 
     data: List[TransactionLine] = []
     order_lines = order.lines.all()
-    # channel = order.channel
 
     tax_included = Site.objects.get_current().settings.include_taxes_in_prices
     shipping_address = order.shipping_address
@@ -284,14 +281,12 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
         variant = line.variant
         if variant is None:
             continue
-        # variant_channel_listing = variant.channel_listings.get(channel=channel)
 
         append_line_to_data(
             data,
             line.id,
             line.quantity,
             tax_included,
-            # variant_channel_listing,
             variant,
             shipping_address,
         )
@@ -302,7 +297,8 @@ def generate_request_data_from_checkout(
     checkout: "Checkout", transaction_type=TRANSACTION_TYPE, discounts=None,
 ):
     lines = get_checkout_lines_data(checkout, discounts)
-    data = generate_request_data(transaction_type, lines=lines, invoice_number=None)
+    data = generate_request_data(
+        transaction_type, lines=lines, invoice_number=None)
     return data
 
 
@@ -310,7 +306,8 @@ def generate_request_data_from_order(
     order: "Order", transaction_type=TRANSACTION_TYPE, discounts=None,
 ):
     lines = get_order_lines_data(order, discounts)
-    data = generate_request_data(transaction_type, lines=lines, invoice_number=order.pk,)
+    data = generate_request_data(
+        transaction_type, lines=lines, invoice_number=order.pk,)
     return data
 
 
@@ -327,7 +324,6 @@ def _fetch_new_taxes_data(
         span.set_tag(opentracing.tags.COMPONENT, "tax")
         span.set_tag("service.name", "avatax_excise")
         response = api_post_request(transaction_url, data, config)
-        # logger.warning(response)
     if response and response.get("Status") == "Success":
         cache.set(data_cache_key, (data, response), CACHE_TIME)
     else:
@@ -364,7 +360,8 @@ def get_checkout_tax_data(
 
 def get_order_request_data(order: "Order", transaction_type=TRANSACTION_TYPE):
     lines = get_order_lines_data(order)
-    data = generate_request_data(transaction_type=transaction_type, lines=lines, invoice_number=order.pk,)
+    data = generate_request_data(
+        transaction_type=transaction_type, lines=lines, invoice_number=order.pk,)
     return data
 
 
@@ -400,7 +397,8 @@ def _retrieve_meta_data_from_cache(token):
     cached_data = cache.get(token)
     return cached_data
 
-def metadata_requires_update (
+
+def metadata_requires_update(
     metadata: str,
     token_in_cache: str,
     force_refresh: bool = False,
@@ -423,9 +421,10 @@ def metadata_requires_update (
 
     return False
 
+
 def process_checkout_metadata(
     metadata: str,
-    checkout_token: str,
+    checkout: "Checkout",
     force_refresh: bool = False,
     cache_time: int = CACHE_TIME
 ):
@@ -433,15 +432,14 @@ def process_checkout_metadata(
 
     Do nothing if metadata are the same. Set new metadata in other cases.
     """
+    checkout_token = checkout.token
     data_cache_key = "checkout_metadata_" + str(checkout_token)
     tax_item = {get_metadata_key("itemized_taxes"): metadata}
 
     if metadata_requires_update(tax_item, data_cache_key) or force_refresh:
-        
+
         checkout_obj = Checkout.objects.filter(token=checkout_token).first()
         if checkout_obj:
             checkout_obj.store_value_in_metadata(items=tax_item)
             checkout_obj.save()
             cache.set(data_cache_key, tax_item, cache_time)
-    
-

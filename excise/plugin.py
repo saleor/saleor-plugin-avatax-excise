@@ -152,9 +152,9 @@ class AvataxExcisePlugin(AvataxPlugin):
         tax = Money(Decimal(response.get("TotalTaxAmount", 0.0)), currency)
         net = checkout_total.net
         total_gross = net + tax
-        taxed_total = quantize_price(TaxedMoney(net=net, gross=total_gross), currency)
+        taxed_total = quantize_price(TaxedMoney(
+            net=net, gross=total_gross), currency)
         total = self._append_prices_of_not_taxed_lines(
-            # taxed_total, lines, checkout.channel, discounts
             taxed_total,
             lines,
             discounts,
@@ -204,7 +204,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not data.TransactionLines:
             return previous_value
         transaction_url = urljoin(
-            get_api_url(self.config.use_sandbox), "AvaTaxExcise/transactions/create"
+            get_api_url(
+                self.config.use_sandbox), "AvaTaxExcise/transactions/create"
         )
         with opentracing.global_tracer().start_active_span(
             "avatax_excise.transactions.create"
@@ -236,13 +237,13 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not self.active:
             return previous_value
         request_data = get_order_request_data(order)
-        # TODO Needed for commit
-        # transaction_id = response.get("UserTranId")
         transaction_url = urljoin(
-            get_api_url(self.config.use_sandbox), "AvaTaxExcise/transactions/create",
+            get_api_url(
+                self.config.use_sandbox), "AvaTaxExcise/transactions/create",
         )
         api_post_request_task.delay(
-            transaction_url, asdict(request_data), asdict(self.config), order.id
+            transaction_url, asdict(request_data), asdict(
+                self.config), order.id
         )
 
         return previous_value
@@ -270,9 +271,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not taxes_data or "Error" in taxes_data["Status"]:
             return base_total
 
-        # store itemized tax information in Checkout metadata for optional display on the frontend
         tax_meta = json.dumps(taxes_data["TransactionTaxes"])
-        process_checkout_metadata(tax_meta, checkout.token)
+        process_checkout_metadata(tax_meta, checkout)
 
         line_tax_total = Decimal(0)
 
