@@ -144,9 +144,6 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not response or "Errors found" in response["Status"]:
             return checkout_total
 
-        if len(response["TransactionTaxes"]) == 0:
-            raise TaxError("ATE did not return TransactionTaxes")
-
         currency = checkout.currency
 
         tax = Money(Decimal(response.get("TotalTaxAmount", 0.0)), currency)
@@ -271,8 +268,9 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not taxes_data or "Error" in taxes_data["Status"]:
             return base_total
 
-        tax_meta = json.dumps(taxes_data["TransactionTaxes"])
-        process_checkout_metadata(tax_meta, checkout)
+        if taxes_data["TransactionTaxes"]:
+            tax_meta = json.dumps(taxes_data["TransactionTaxes"])
+            process_checkout_metadata(tax_meta, checkout)
 
         line_tax_total = Decimal(0)
 
