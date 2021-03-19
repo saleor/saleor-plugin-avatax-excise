@@ -433,7 +433,8 @@ def process_checkout_metadata(
     Do nothing if metadata are the same. Set new metadata in other cases.
     """
     checkout_token = checkout.token
-    data_cache_key = "checkout_metadata_" + str(checkout_token)
+    data_cache_key = get_metadata_key(
+        "checkout_metadata_") + str(checkout_token)
     tax_item = {get_metadata_key("itemized_taxes"): metadata}
 
     if metadata_requires_update(tax_item, data_cache_key) or force_refresh:
