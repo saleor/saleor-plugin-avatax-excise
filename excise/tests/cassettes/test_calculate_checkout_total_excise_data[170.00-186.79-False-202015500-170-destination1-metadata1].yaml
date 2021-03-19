@@ -1,7 +1,7 @@
 interactions:
 - request:
     body: '{"EffectiveDate": "02/22/21", "InvoiceDate": "02/22/21", "TitleTransferCode":
-      "DEST", "TransactionType": "RETAIL", "TransactionLines": [{"InvoiceLine": 1,
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
       "ProductCode": "202015500", "UnitPrice": "170.000", "UnitOfMeasure": "PAC",
       "BilledUnits": "1", "LineAmount": "170.00", "AlternateUnitPrice": "1.000", "TaxIncluded":
       false, "UnitQuantity": 18, "UnitQuantityUnitOfMeasure": "EA", "DestinationCountryCode":
@@ -48,7 +48,7 @@ interactions:
         \"N\",\r\n      \"SalesTaxBaseAmount\": 0.0,\r\n      \"LicenseNumber\": \"\",\r\n
         \     \"UserReturnedValue\": \"\",\r\n      \"ScenarioId\": 1574219,\r\n      \"ScenarioTaxGroupId\":
         4395,\r\n      \"ScenarioSequence\": 2,\r\n      \"RateDescription\": \"AZ
-        State Cigar Tax (Retail more than 5 cents)\",\r\n      \"Currency\": \"USD\",\r\n
+        State Cigar Tax (DIRECT more than 5 cents)\",\r\n      \"Currency\": \"USD\",\r\n
         \     \"UnitOfMeasure\": \"EA\",\r\n      \"SubtotalInd\": \"U\",\r\n      \"StatusCode\":
         \"ACTIVE\",\r\n      \"QuantityInd\": \"B\"\r\n    },\r\n    {\r\n      \"TransactionTaxAmounts\":
         [],\r\n      \"SequenceId\": 2,\r\n      \"TransactionLine\": 1,\r\n      \"InvoiceLine\":
@@ -115,7 +115,7 @@ interactions:
       message: OK
 - request:
     body: '{"EffectiveDate": "02/22/21", "InvoiceDate": "02/22/21", "TitleTransferCode":
-      "DEST", "TransactionType": "RETAIL", "TransactionLines": [{"InvoiceLine": 1,
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
       "ProductCode": "202015500", "UnitPrice": "170.000", "UnitOfMeasure": "PAC",
       "BilledUnits": "1", "LineAmount": "170.00", "AlternateUnitPrice": "1.000", "TaxIncluded":
       false, "UnitQuantity": 18, "UnitQuantityUnitOfMeasure": "EA", "DestinationCountryCode":
@@ -162,7 +162,7 @@ interactions:
         \"N\",\r\n      \"SalesTaxBaseAmount\": 0.0,\r\n      \"LicenseNumber\": \"\",\r\n
         \     \"UserReturnedValue\": \"\",\r\n      \"ScenarioId\": 1574219,\r\n      \"ScenarioTaxGroupId\":
         4395,\r\n      \"ScenarioSequence\": 2,\r\n      \"RateDescription\": \"AZ
-        State Cigar Tax (Retail more than 5 cents)\",\r\n      \"Currency\": \"USD\",\r\n
+        State Cigar Tax (DIRECT more than 5 cents)\",\r\n      \"Currency\": \"USD\",\r\n
         \     \"UnitOfMeasure\": \"EA\",\r\n      \"SubtotalInd\": \"U\",\r\n      \"StatusCode\":
         \"ACTIVE\",\r\n      \"QuantityInd\": \"B\"\r\n    },\r\n    {\r\n      \"TransactionTaxAmounts\":
         [],\r\n      \"SequenceId\": 2,\r\n      \"TransactionLine\": 1,\r\n      \"InvoiceLine\":

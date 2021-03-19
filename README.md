@@ -4,7 +4,7 @@
 
 | Saleor                                                                                                  | Avalara Excise            | Explanation                                                                    |
 | ------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------ |
-| n/a                                                                                                     | TransactionType           | hardcoded "RETAIL"                                                             |
+| n/a                                                                                                     | TransactionType           | hardcoded "DIRECT" for e-commerce, Options are DIRECT, RETAIL and WHOLESALE    |
 | n/a                                                                                                     | TitleTransferCode         | hardcoded "DEST", Definition of where the title transfer takes place           |
 | Site.settings.include_taxes_in_prices                                                                   | TaxIncluded               |                                                                                |
 | variant.sku                                                                                             | ProductCode               | ProductCode that ATE recognizes                                                |

@@ -17,6 +17,8 @@ from django.core.cache import cache
 from requests.auth import HTTPBasicAuth
 
 from saleor.checkout import base_calculations
+from saleor.checkout.models import Checkout
+
 
 try:
     from saleor.checkout.utils import fetch_checkout_lines
@@ -29,6 +31,7 @@ from saleor.plugins.avatax import (
     AvataxConfiguration,
     api_get_request,
     taxes_need_new_fetch,
+    _retrieve_from_cache
 )
 
 if TYPE_CHECKING:
@@ -44,6 +47,9 @@ if TYPE_CHECKING:
     )
 
 logger = logging.getLogger(__name__)
+
+
+TRANSACTION_TYPE = "DIRECT"  # Must be DIRECT for direct to consumer e-commerece
 
 
 def get_metadata_key(key_name: str):
@@ -72,19 +78,20 @@ def api_post_request(
 ) -> Dict[str, Any]:
     response = None
     try:
-        auth = HTTPBasicAuth(config.username_or_account, config.password_or_license)
+        auth = HTTPBasicAuth(config.username_or_account,
+                             config.password_or_license)
         headers = {
             "x-company-id": config.company_name,
             "Content-Type": "application/json",
         }
         formatted_data = json.dumps(data, cls=EnhancedJSONEncoder)
-        response = requests.post(url, headers=headers, auth=auth, data=formatted_data,)
-        logger.debug("Hit to Avatax to calculate taxes %s", url)
+        response = requests.post(url, headers=headers,
+                                 auth=auth, data=formatted_data,)
+        logger.debug("Hit to Avatax Excise to calculate taxes %s", url)
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
-            logger.exception("Avatax response contains errors %s", json_response)
-            # this is how avatax handles an error in the response
-            # is this strict enough with our setup?
+            logger.exception(
+                "Avatax Excise response contains errors %s", json_response)
             return json_response
 
     except requests.exceptions.RequestException:
@@ -93,7 +100,7 @@ def api_post_request(
     except json.JSONDecodeError:
         content = response.content if response else "Unable to find the response"
         logger.exception(
-            "Unable to decode the response from Avatax. Response: %s", content
+            "Unable to decode the response from Avatax Excise. Response: %s", content
         )
         return {}
     return json_response  # type: ignore
@@ -106,7 +113,6 @@ class TransactionLine:
     UnitPrice: Decimal
     UnitOfMeasure: str
     BilledUnits: Decimal
-    LineAmount: Optional[Decimal]
     AlternateUnitPrice: Optional[Decimal]
     TaxIncluded: bool
     UnitQuantity: Optional[int]
@@ -153,29 +159,12 @@ class TransactionCreateRequestData:
     InvoiceNumber: Optional[str] = None
 
 
-def generate_request_data(
-    transaction_type: str, lines: List[TransactionLine], checkout: "Checkout",
-):
-    date = checkout.last_change.strftime("%m/%d/%y")
+def generate_request_data(transaction_type: str, lines: List[TransactionLine], invoice_number: Optional[str]):
+    today_date = str(date.today())  # Does not seem timezone safe
     data = TransactionCreateRequestData(
-        EffectiveDate=date,
-        InvoiceDate=date,
-        TitleTransferCode="DEST",
-        TransactionType=transaction_type,
-        TransactionLines=lines,
-    )
-
-    return data
-
-
-def generate_request_data_order(
-    transaction_type: str, lines: List[TransactionLine], order: "Order",
-):
-    date = order.created.strftime("%m/%d/%y")
-    data = TransactionCreateRequestData(
-        EffectiveDate=date,
-        InvoiceDate=date,
-        InvoiceNumber=order.pk,
+        EffectiveDate=today_date,
+        InvoiceDate=today_date,
+        InvoiceNumber=invoice_number,
         TitleTransferCode="DEST",
         TransactionType=transaction_type,
         TransactionLines=lines,
@@ -188,9 +177,7 @@ def append_line_to_data(
     data: List[TransactionLine],
     line_id: int,
     quantity: int,
-    line_amount: Decimal,
     tax_included: bool,
-    # variant_channel_listing: "ProductVariantChannelListing",
     variant: "ProductVariant",
     shipping_address: "Address",
 ):
@@ -207,7 +194,6 @@ def append_line_to_data(
                 get_metadata_key("UnitOfMeasure")
             ),
             BilledUnits=Decimal(quantity),
-            LineAmount=line_amount,
             AlternateUnitPrice=cost_price,
             TaxIncluded=tax_included,
             UnitQuantity=variant.get_value_from_private_metadata(
@@ -264,34 +250,17 @@ def get_checkout_lines_data(
 ) -> List[TransactionLine]:
     data: List[TransactionLine] = []
     lines_info = fetch_checkout_lines(checkout)
-    # channel = checkout.channel
     tax_included = Site.objects.get_current().settings.include_taxes_in_prices
     shipping_address = checkout.shipping_address
     if shipping_address is None:
         raise TaxError("Shipping address required for ATE tax calculation")
 
     for line_info in lines_info:
-        line_amount = (
-            base_calculations.base_checkout_line_total(
-                line_info.line,
-                # channel,
-                discounts,
-            ).gross.amount
-            if tax_included
-            else base_calculations.base_checkout_line_total(
-                line_info.line,
-                # channel,
-                discounts,
-            ).net.amount
-        )
-
         append_line_to_data(
             data,
             line_info.line.id,
             line_info.line.quantity,
-            line_amount,
             tax_included,
-            # line_info.channel_listing,
             line_info.line.variant,
             shipping_address,
         )
@@ -302,7 +271,6 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
 
     data: List[TransactionLine] = []
     order_lines = order.lines.all()
-    # channel = order.channel
 
     tax_included = Site.objects.get_current().settings.include_taxes_in_prices
     shipping_address = order.shipping_address
@@ -313,17 +281,12 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
         variant = line.variant
         if variant is None:
             continue
-        # variant_channel_listing = variant.channel_listings.get(channel=channel)
-        line_amount = (
-            line.unit_price_gross_amount if tax_included else line.unit_price_net_amount
-        )
+
         append_line_to_data(
             data,
             line.id,
             line.quantity,
-            line_amount,
             tax_included,
-            # variant_channel_listing,
             variant,
             shipping_address,
         )
@@ -331,22 +294,20 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
 
 
 def generate_request_data_from_checkout(
-    checkout: "Checkout",
-    transaction_type="RETAIL",  # This field is not well documented in ATE
-    discounts=None,
+    checkout: "Checkout", transaction_type=TRANSACTION_TYPE, discounts=None,
 ):
     lines = get_checkout_lines_data(checkout, discounts)
-    data = generate_request_data(transaction_type, checkout=checkout, lines=lines,)
+    data = generate_request_data(
+        transaction_type, lines=lines, invoice_number=None)
     return data
 
 
 def generate_request_data_from_order(
-    order: "Order",
-    transaction_type="RETAIL",  # This field is not well documented in ATE
-    discounts=None,
+    order: "Order", transaction_type=TRANSACTION_TYPE, discounts=None,
 ):
     lines = get_order_lines_data(order, discounts)
-    data = generate_request_data_order(transaction_type, order=order, lines=lines,)
+    data = generate_request_data(
+        transaction_type, lines=lines, invoice_number=order.pk,)
     return data
 
 
@@ -397,6 +358,13 @@ def get_checkout_tax_data(
     return get_cached_response_or_fetch(data, str(checkout.token), config)
 
 
+def get_order_request_data(order: "Order", transaction_type=TRANSACTION_TYPE):
+    lines = get_order_lines_data(order)
+    data = generate_request_data(
+        transaction_type=transaction_type, lines=lines, invoice_number=order.pk,)
+    return data
+
+
 def get_order_tax_data(
     order: "Order", config: AvataxConfiguration, force_refresh=False
 ) -> Dict[str, Any]:
@@ -423,3 +391,56 @@ def get_order_tax_data(
                 )
         raise TaxError(customer_msg)
     return response
+
+
+def _retrieve_meta_data_from_cache(token):
+    cached_data = cache.get(token)
+    return cached_data
+
+
+def metadata_requires_update(
+    metadata: str,
+    token_in_cache: str,
+    force_refresh: bool = False,
+):
+    """Check if Checkout metadata needs to be reset.
+
+    The itemized taxes from ATE are stored in a cache. If an object doesn't exist in cache
+    or something has changed, taxes need to be refetched.
+    """
+    if force_refresh:
+        return True
+
+    cached_metadata = _retrieve_meta_data_from_cache(token_in_cache)
+
+    if not cached_metadata:
+        return True
+
+    if cached_metadata != metadata:
+        return True
+
+    return False
+
+
+def process_checkout_metadata(
+    metadata: str,
+    checkout: "Checkout",
+    force_refresh: bool = False,
+    cache_time: int = CACHE_TIME
+):
+    """Check for Checkout metadata in cache.
+
+    Do nothing if metadata are the same. Set new metadata in other cases.
+    """
+    checkout_token = checkout.token
+    data_cache_key = get_metadata_key(
+        "checkout_metadata_") + str(checkout_token)
+    tax_item = {get_metadata_key("itemized_taxes"): metadata}
+
+    if metadata_requires_update(tax_item, data_cache_key) or force_refresh:
+
+        checkout_obj = Checkout.objects.filter(token=checkout_token).first()
+        if checkout_obj:
+            checkout_obj.store_value_in_metadata(items=tax_item)
+            checkout_obj.save()
+            cache.set(data_cache_key, tax_item, cache_time)
