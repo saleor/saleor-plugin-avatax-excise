@@ -10,11 +10,8 @@ from django.test import override_settings
 from prices import Money, TaxedMoney
 from requests import RequestException
 
-# from saleor.shipping.models import ShippingMethodChannelListing
-
 from saleor.account.models import Address
 
-# from saleor.checkout import CheckoutLineInfo
 from saleor.checkout.models import CheckoutLine
 from saleor.checkout.utils import add_variant_to_checkout
 from ..compat import fetch_checkout_lines
@@ -22,10 +19,10 @@ from saleor.core.prices import quantize_price
 from saleor.core.taxes import TaxError
 from saleor.product.models import ProductType, ProductVariant
 from saleor.warehouse.models import Warehouse
-from ....manager import get_plugins_manager
-from ....models import PluginConfiguration
-from ... import AvataxConfiguration
-from .. import api_post_request, get_metadata_key
+from saleor.plugins.manager import get_plugins_manager
+from saleor.plugins.models import PluginConfiguration
+from saleor.plugins.avatax import AvataxConfiguration
+from ..utils import api_post_request, get_metadata_key
 from ..plugin import AvataxExcisePlugin
 
 
