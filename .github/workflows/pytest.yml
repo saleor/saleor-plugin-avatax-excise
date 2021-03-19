@@ -66,8 +66,8 @@ jobs:
 
       - name: Copy plugin to Saleor
         run: |
-          cp -r plugin/excise saleor/plugins/
+          cp -r plugin/excise saleor/plugins/avatax
 
       - name: Run tests
         run: |
-          pytest saleor/plugins/excise
+          pytest saleor/plugins/avatax/excise
