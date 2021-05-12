@@ -26,7 +26,7 @@ from .utils import (
     get_checkout_tax_data,
     get_order_request_data,
     TRANSACTION_TYPE,
-    process_checkout_metadata
+    process_checkout_metadata,
 )
 from .tasks import api_post_request_task
 
@@ -52,6 +52,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         {"name": "Use sandbox", "value": True},
         {"name": "Company name", "value": ""},
         {"name": "Autocommit", "value": False},
+        {"name": "Freight Tax Code", "value": "FR020100"},
     ]
     CONFIG_STRUCTURE = {
         "Username or account": {
@@ -79,6 +80,12 @@ class AvataxExcisePlugin(AvataxPlugin):
             "help_text": "Determines, if order transactions sent to Avalara "
             "Excise should be committed by default.",
             "label": "Autocommit",
+        },
+        "Freight Tax Code": {
+            "type": ConfigurationTypeField.STRING,
+            "help_text": "Avalara Tax Code to use for shipping. See "
+            "https://taxcode.avatax.avalara.com/tree?tree=freight-and-freight-related-charges&tab=interactive",
+            "label": "Freight Tax Code",
         },
     }
 
@@ -141,7 +148,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             logger.debug("Checkout Invalid in Calculate Checkout Total")
             return checkout_total
 
-        checkout = checkout_info.checkout ## change this
+        checkout = checkout_info.checkout  ## change this
         response = get_checkout_tax_data(checkout_info, lines, discounts, self.config)
         if not response or "Errors found" in response["Status"]:
             return checkout_total
@@ -151,8 +158,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         tax = Money(Decimal(response.get("TotalTaxAmount", 0.0)), currency)
         net = checkout_total.net
         total_gross = net + tax
-        taxed_total = quantize_price(TaxedMoney(
-            net=net, gross=total_gross), currency)
+        taxed_total = quantize_price(TaxedMoney(net=net, gross=total_gross), currency)
         total = self._append_prices_of_not_taxed_lines(
             taxed_total,
             lines,
@@ -201,13 +207,16 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
 
         data = generate_request_data_from_checkout(
-            checkout_info, lines_info=lines, config=self.config, transaction_type=TRANSACTION_TYPE, discounts=discounts,
+            checkout_info,
+            lines_info=lines,
+            config=self.config,
+            transaction_type=TRANSACTION_TYPE,
+            discounts=discounts,
         )
         if not data.TransactionLines:
             return previous_value
         transaction_url = urljoin(
-            get_api_url(
-                self.config.use_sandbox), "AvaTaxExcise/transactions/create"
+            get_api_url(self.config.use_sandbox), "AvaTaxExcise/transactions/create"
         )
         with opentracing.global_tracer().start_active_span(
             "avatax_excise.transactions.create"
@@ -242,12 +251,11 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
         request_data = get_order_request_data(order)
         transaction_url = urljoin(
-            get_api_url(
-                self.config.use_sandbox), "AvaTaxExcise/transactions/create",
+            get_api_url(self.config.use_sandbox),
+            "AvaTaxExcise/transactions/create",
         )
         api_post_request_task.delay(
-            transaction_url, asdict(request_data), asdict(
-                self.config), order.id
+            transaction_url, asdict(request_data), asdict(self.config), order.id
         )
 
         return previous_value
