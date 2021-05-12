@@ -30,7 +30,7 @@ from saleor.plugins.avatax import (
     AvataxConfiguration,
     api_get_request,
     taxes_need_new_fetch,
-    _retrieve_from_cache
+    _retrieve_from_cache,
 )
 
 if TYPE_CHECKING:
@@ -49,6 +49,16 @@ logger = logging.getLogger(__name__)
 
 
 TRANSACTION_TYPE = "DIRECT"  # Must be DIRECT for direct to consumer e-commerece
+
+
+@dataclass
+class AvataxConfiguration:
+    username_or_account: str
+    password_or_license: str
+    use_sandbox: bool = True
+    company_name: str = "DEFAULT"
+    autocommit: bool = False
+    freight_tax_code: str = "FR020100"
 
 
 def get_metadata_key(key_name: str):
@@ -77,20 +87,22 @@ def api_post_request(
 ) -> Dict[str, Any]:
     response = None
     try:
-        auth = HTTPBasicAuth(config.username_or_account,
-                             config.password_or_license)
+        auth = HTTPBasicAuth(config.username_or_account, config.password_or_license)
         headers = {
             "x-company-id": config.company_name,
             "Content-Type": "application/json",
         }
         formatted_data = json.dumps(data, cls=EnhancedJSONEncoder)
-        response = requests.post(url, headers=headers,
-                                 auth=auth, data=formatted_data,)
+        response = requests.post(
+            url,
+            headers=headers,
+            auth=auth,
+            data=formatted_data,
+        )
         logger.debug("Hit to Avatax Excise to calculate taxes %s", url)
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
-            logger.exception(
-                "Avatax Excise response contains errors %s", json_response)
+            logger.exception("Avatax Excise response contains errors %s", json_response)
             return json_response
 
     except requests.exceptions.RequestException:
@@ -159,7 +171,9 @@ class TransactionCreateRequestData:
     InvoiceNumber: Optional[str] = None
 
 
-def generate_request_data(transaction_type: str, lines: List[TransactionLine], invoice_number: Optional[str]):
+def generate_request_data(
+    transaction_type: str, lines: List[TransactionLine], invoice_number: Optional[str]
+):
     today_date = str(date.today())  # Does not seem timezone safe
     data = TransactionCreateRequestData(
         EffectiveDate=today_date,
@@ -181,10 +195,12 @@ def append_line_to_data(
     tax_included: bool,
     variant: "ProductVariant",
     shipping_address: "Address",
-    variant_channel_listing: "ProductVariantChannelListing"
+    variant_channel_listing: "ProductVariantChannelListing",
 ):
     """Abstract line data regardless of Checkout or Order."""
-    stock = variant.stocks.first() ## .for_country(shipping_address.country) method is gone
+    stock = variant.stocks.for_country_and_channel(
+        shipping_address.country, variant_channel_listing.channel.slug
+    ).first()
     warehouse = stock.warehouse
     unit_price = base_calculations.base_checkout_line_unit_price(amount, quantity)
     data.append(
@@ -291,7 +307,9 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
             continue
 
         channel_id = order.channel.id
-        variant_channel_listing = line.variant.channel_listings.get(channel_id=order.channel.id)
+        variant_channel_listing = line.variant.channel_listings.get(
+            channel_id=order.channel.id
+        )
 
         append_line_to_data(
             amount=line.unit_price_net_amount * line.quantity,
@@ -301,7 +319,7 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
             shipping_address=shipping_address,
             tax_included=tax_included,
             variant=variant,
-            variant_channel_listing=variant_channel_listing
+            variant_channel_listing=variant_channel_listing,
         )
     return data
 
@@ -315,17 +333,21 @@ def generate_request_data_from_checkout(
     discounts=None,
 ):
     lines = get_checkout_lines_data(checkout_info, lines_info, discounts)
-    data = generate_request_data(
-        transaction_type, lines=lines, invoice_number=None)
+    data = generate_request_data(transaction_type, lines=lines, invoice_number=None)
     return data
 
 
 def generate_request_data_from_order(
-    order: "Order", transaction_type=TRANSACTION_TYPE, discounts=None,
+    order: "Order",
+    transaction_type=TRANSACTION_TYPE,
+    discounts=None,
 ):
     lines = get_order_lines_data(order, discounts)
     data = generate_request_data(
-        transaction_type, lines=lines, invoice_number=order.pk,)
+        transaction_type,
+        lines=lines,
+        invoice_number=order.pk,
+    )
     return data
 
 
@@ -384,7 +406,10 @@ def get_checkout_tax_data(
 def get_order_request_data(order: "Order", transaction_type=TRANSACTION_TYPE):
     lines = get_order_lines_data(order)
     data = generate_request_data(
-        transaction_type=transaction_type, lines=lines, invoice_number=order.pk,)
+        transaction_type=transaction_type,
+        lines=lines,
+        invoice_number=order.pk,
+    )
     return data
 
 
@@ -451,15 +476,14 @@ def process_checkout_metadata(
     metadata: str,
     checkout: "Checkout",
     force_refresh: bool = False,
-    cache_time: int = CACHE_TIME
+    cache_time: int = CACHE_TIME,
 ):
     """Check for Checkout metadata in cache.
 
     Do nothing if metadata are the same. Set new metadata in other cases.
     """
     checkout_token = checkout.token
-    data_cache_key = get_metadata_key(
-        "checkout_metadata_") + str(checkout_token)
+    data_cache_key = get_metadata_key("checkout_metadata_") + str(checkout_token)
     tax_item = {get_metadata_key("itemized_taxes"): metadata}
 
     if metadata_requires_update(tax_item, data_cache_key) or force_refresh:

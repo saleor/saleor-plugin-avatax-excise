@@ -19,6 +19,7 @@ from saleor.plugins.error_codes import PluginErrorCode
 from saleor.plugins.avatax import _validate_checkout
 from saleor.plugins.avatax.plugin import AvataxPlugin
 from .utils import (
+    AvataxConfiguration,
     api_get_request,
     api_post_request,
     generate_request_data_from_checkout,
@@ -52,7 +53,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         {"name": "Use sandbox", "value": True},
         {"name": "Company name", "value": ""},
         {"name": "Autocommit", "value": False},
-        {"name": "Freight Tax Code", "value": "FR020100"},
+        {"name": "Freight tax code", "value": "FR020100"},
     ]
     CONFIG_STRUCTURE = {
         "Username or account": {
@@ -81,13 +82,27 @@ class AvataxExcisePlugin(AvataxPlugin):
             "Excise should be committed by default.",
             "label": "Autocommit",
         },
-        "Freight Tax Code": {
+        "Freight tax code": {
             "type": ConfigurationTypeField.STRING,
             "help_text": "Avalara Tax Code to use for shipping. See "
             "https://taxcode.avatax.avalara.com/tree?tree=freight-and-freight-related-charges&tab=interactive",
             "label": "Freight Tax Code",
         },
     }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Convert to dict to easier take config elements
+        configuration = {item["name"]: item["value"] for item in self.configuration}
+
+        self.config = AvataxConfiguration(
+            username_or_account=configuration["Username or account"],
+            password_or_license=configuration["Password or license"],
+            use_sandbox=configuration["Use sandbox"],
+            company_name=configuration["Company name"],
+            autocommit=configuration["Autocommit"],
+            freight_tax_code=configuration["Freight tax code"],
+        )
 
     @classmethod
     def validate_authentication(cls, plugin_configuration: "PluginConfiguration"):
