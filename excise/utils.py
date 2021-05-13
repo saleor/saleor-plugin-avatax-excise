@@ -153,6 +153,7 @@ class TransactionLine:
     OriginAddress1: str
     OriginAddress2: Optional[str]
 
+    UserData: Optional[str]
     CustomString1: Optional[str]
     CustomString2: Optional[str]
     CustomString3: Optional[str]
@@ -242,6 +243,7 @@ def append_line_to_data(
             OriginCity=warehouse.address.city,
             OriginCounty=warehouse.address.city_area,
             OriginPostalCode=warehouse.address.postal_code,
+            UserData=variant.sku,
             CustomString1=variant.get_value_from_private_metadata(
                 get_metadata_key("CustomString1")
             ),

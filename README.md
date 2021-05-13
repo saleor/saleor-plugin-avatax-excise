@@ -36,6 +36,7 @@
 | warehouse.address.postal_code                                                                           | OriginPostalCode          |                                                                                |
 | warehouse.address.street_address_1                                                                      | OriginAddress1            |                                                                                |
 | warehouse.address.street_address_2                                                                      | OriginAddress2            |                                                                                |
+| variant.sku                                                                                             | UserData                  | ATE doesn't return line item sku in response, helps cross reference line items |
 | variant.private_metadata["mirumee.taxes.avalara_excise:CustomString1"]                                  | CustomString1             |                                                                                |
 | variant.private_metadata["mirumee.taxes.avalara_excise:CustomString2"]                                  | CustomString2             |                                                                                |
 | variant.private_metadata["mirumee.taxes.avalara_excise:CustomString3"]                                  | CustomString3             |                                                                                |

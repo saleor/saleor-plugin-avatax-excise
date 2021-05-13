@@ -91,7 +91,7 @@ class AvataxExcisePlugin(AvataxPlugin):
     }
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(AvataxPlugin, self).__init__(*args, **kwargs)
         # Convert to dict to easier take config elements
         configuration = {item["name"]: item["value"] for item in self.configuration}
 
