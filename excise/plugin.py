@@ -53,7 +53,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         {"name": "Use sandbox", "value": True},
         {"name": "Company name", "value": ""},
         {"name": "Autocommit", "value": False},
-        {"name": "Freight tax code", "value": "FR020100"},
+        {"name": "Shipping Product Code", "value": "TAXFREIGHT"},
     ]
     CONFIG_STRUCTURE = {
         "Username or account": {
@@ -82,11 +82,12 @@ class AvataxExcisePlugin(AvataxPlugin):
             "Excise should be committed by default.",
             "label": "Autocommit",
         },
-        "Freight tax code": {
+        "Shipping Product Code": {
             "type": ConfigurationTypeField.STRING,
-            "help_text": "Avalara Tax Code to use for shipping. See "
+            "help_text": "Avalara Excise Product Code used to represent shipping. "
+            "This Product should set the Avatax Tax Code to FR020000 or other freight tax code. See "
             "https://taxcode.avatax.avalara.com/tree?tree=freight-and-freight-related-charges&tab=interactive",
-            "label": "Freight Tax Code",
+            "label": "Shipping Product Code",
         },
     }
 
@@ -101,7 +102,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             use_sandbox=configuration["Use sandbox"],
             company_name=configuration["Company name"],
             autocommit=configuration["Autocommit"],
-            freight_tax_code=configuration["Freight tax code"],
+            shipping_product_code=configuration["Shipping Product Code"],
         )
 
     @classmethod

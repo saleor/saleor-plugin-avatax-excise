@@ -58,7 +58,7 @@ class AvataxConfiguration:
     use_sandbox: bool = True
     company_name: str = "DEFAULT"
     autocommit: bool = False
-    freight_tax_code: str = "FR020100"
+    shipping_product_code: str = "TAXFREIGHT"
 
 
 def get_metadata_key(key_name: str):
@@ -100,6 +100,9 @@ def api_post_request(
             data=formatted_data,
         )
         logger.debug("Hit to Avatax Excise to calculate taxes %s", url)
+        if response.status_code == 401:
+            logger.exception("Avatax Excise Authentication Error - Invalid Credentials")
+            return {}
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
             logger.exception("Avatax Excise response contains errors %s", json_response)
@@ -119,11 +122,11 @@ def api_post_request(
 
 @dataclass
 class TransactionLine:
-    InvoiceLine: int
+    InvoiceLine: Optional[int]
     ProductCode: str
-    UnitPrice: Decimal
-    UnitOfMeasure: str
-    BilledUnits: Decimal
+    UnitPrice: Optional[Decimal]
+    UnitOfMeasure: Optional[str]
+    BilledUnits: Optional[Decimal]
     LineAmount: Optional[Decimal]
     AlternateUnitPrice: Optional[Decimal]
     TaxIncluded: bool
@@ -145,21 +148,21 @@ class TransactionLine:
     SaleCity: str
     SalePostalCode: str
 
-    OriginCountryCode: str
-    OriginJurisdiction: str
-    OriginCounty: str
-    OriginCity: str
-    OriginPostalCode: str
-    OriginAddress1: str
-    OriginAddress2: Optional[str]
+    OriginCountryCode: Optional[str] = None
+    OriginJurisdiction: Optional[str] = None
+    OriginCounty: Optional[str] = None
+    OriginCity: Optional[str] = None
+    OriginPostalCode: Optional[str] = None
+    OriginAddress1: Optional[str] = None
+    OriginAddress2: Optional[str] = None
 
-    UserData: Optional[str]
-    CustomString1: Optional[str]
-    CustomString2: Optional[str]
-    CustomString3: Optional[str]
-    CustomNumeric1: Optional[Decimal]
-    CustomNumeric2: Optional[Decimal]
-    CustomNumeric3: Optional[Decimal]
+    UserData: Optional[str] = None
+    CustomString1: Optional[str] = None
+    CustomString2: Optional[str] = None
+    CustomString3: Optional[str] = None
+    CustomNumeric1: Optional[Decimal] = None
+    CustomNumeric2: Optional[Decimal] = None
+    CustomNumeric3: Optional[Decimal] = None
 
 
 @dataclass
@@ -266,9 +269,52 @@ def append_line_to_data(
     )
 
 
+def append_shipping_to_data(
+    data: List[Dict],
+    shipping_product_code: str,
+    shipping_address: "Address",
+    shipping_method_channel_listings: Optional["ShippingMethodChannelListing"],
+):
+    charge_taxes_on_shipping = (
+        Site.objects.get_current().settings.charge_taxes_on_shipping
+    )
+    if charge_taxes_on_shipping and shipping_method_channel_listings:
+        shipping_price = shipping_method_channel_listings.price
+        data.append(
+            TransactionLine(
+                InvoiceLine=None,
+                ProductCode=shipping_product_code,
+                UnitPrice=None,
+                UnitOfMeasure=None,
+                BilledUnits=None,
+                LineAmount=shipping_price.amount,
+                AlternateUnitPrice=None,
+                TaxIncluded=False,
+                UnitQuantity=None,
+                UnitQuantityUnitOfMeasure=None,
+                DestinationCountryCode=shipping_address.country.alpha3,
+                DestinationJurisdiction=shipping_address.country_area,
+                DestinationAddress1=shipping_address.street_address_1,
+                DestinationAddress2=shipping_address.street_address_2,
+                DestinationCity=shipping_address.city,
+                DestinationCounty=shipping_address.city_area,
+                DestinationPostalCode=shipping_address.postal_code,
+                SaleCountryCode=shipping_address.country.alpha3,
+                SaleJurisdiction=shipping_address.country_area,
+                SaleAddress1=shipping_address.street_address_1,
+                SaleAddress2=shipping_address.street_address_2,
+                SaleCity=shipping_address.city,
+                SaleCounty=shipping_address.city_area,
+                SalePostalCode=shipping_address.postal_code,
+                UserData="Shipping",
+            )
+        )
+
+
 def get_checkout_lines_data(
     checkout_info: "CheckoutInfo",
     lines_info: Iterable["CheckoutLineInfo"],
+    config: AvataxConfiguration,
     discounts=None,
 ) -> List[TransactionLine]:
     data: List[TransactionLine] = []
@@ -290,6 +336,13 @@ def get_checkout_lines_data(
             variant=line_info.line.variant,
             variant_channel_listing=line_info.channel_listing,
         )
+
+    append_shipping_to_data(
+        data,
+        config.shipping_product_code,
+        shipping_address,
+        checkout_info.shipping_method_channel_listings,
+    )
     return data
 
 
@@ -334,7 +387,7 @@ def generate_request_data_from_checkout(
     transaction_type=TRANSACTION_TYPE,
     discounts=None,
 ):
-    lines = get_checkout_lines_data(checkout_info, lines_info, discounts)
+    lines = get_checkout_lines_data(checkout_info, lines_info, config, discounts)
     data = generate_request_data(transaction_type, lines=lines, invoice_number=None)
     return data
 

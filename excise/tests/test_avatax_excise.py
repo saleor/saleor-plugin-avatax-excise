@@ -54,7 +54,7 @@ def plugin_configuration(db, channel_USD):
                 {"name": "Use sandbox", "value": sandbox},
                 {"name": "Company name", "value": company_id},
                 {"name": "Autocommit", "value": False},
-                {"name": "Freight tax code", "value": "FR020100"},
+                {"name": "Shipping Product Code", "value": "FR020100"},
             ],
         }
         configuration = PluginConfiguration.objects.create(
@@ -614,7 +614,7 @@ def test_order_created_calls_task(
         "use_sandbox": True,
         "company_name": conf["Company name"],
         "autocommit": False,
-        "freight_tax_code": "FR020100",
+        "shipping_product_code": "FR020100",
     }
 
     api_post_request_task_mock.assert_called_once_with(
