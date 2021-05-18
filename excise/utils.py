@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 
 
 TRANSACTION_TYPE = "DIRECT"  # Must be DIRECT for direct to consumer e-commerece
+SHIPPING_UNIT_OF_MEASURE = "EA"  # "Each"
 
 
 @dataclass
@@ -285,7 +286,7 @@ def append_shipping_to_data(
                 InvoiceLine=None,
                 ProductCode=shipping_product_code,
                 UnitPrice=None,
-                UnitOfMeasure=None,
+                UnitOfMeasure=SHIPPING_UNIT_OF_MEASURE,
                 BilledUnits=None,
                 LineAmount=shipping_price.amount,
                 AlternateUnitPrice=None,
