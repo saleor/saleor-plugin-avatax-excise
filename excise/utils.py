@@ -206,7 +206,10 @@ def append_line_to_data(
     stock = variant.stocks.for_country_and_channel(
         shipping_address.country, variant_channel_listing.channel.slug
     ).first()
-    warehouse = stock.warehouse
+    if stock:
+        warehouse_address = stock.warehouse.address
+    else:
+        warehouse_address = None
     unit_price = base_calculations.base_checkout_line_unit_price(amount, quantity)
     data.append(
         TransactionLine(
@@ -240,13 +243,13 @@ def append_line_to_data(
             SaleCity=shipping_address.city,
             SaleCounty=shipping_address.city_area,
             SalePostalCode=shipping_address.postal_code,
-            OriginCountryCode=warehouse.address.country.alpha3,
-            OriginJurisdiction=warehouse.address.country_area,
-            OriginAddress1=warehouse.address.street_address_1,
-            OriginAddress2=warehouse.address.street_address_2,
-            OriginCity=warehouse.address.city,
-            OriginCounty=warehouse.address.city_area,
-            OriginPostalCode=warehouse.address.postal_code,
+            OriginCountryCode=warehouse_address.country.alpha3 if warehouse_address else None,
+            OriginJurisdiction=warehouse_address.country_area if warehouse_address else None,
+            OriginAddress1=warehouse_address.street_address_1 if warehouse_address else None,
+            OriginAddress2=warehouse_address.street_address_2 if warehouse_address else None,
+            OriginCity=warehouse_address.city if warehouse_address else None,
+            OriginCounty=warehouse_address.city_area if warehouse_address else None,
+            OriginPostalCode=warehouse_address.postal_code if warehouse_address else None,
             UserData=variant.sku,
             CustomString1=variant.get_value_from_private_metadata(
                 get_metadata_key("CustomString1")

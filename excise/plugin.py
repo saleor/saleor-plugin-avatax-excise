@@ -2,7 +2,7 @@ import json
 import logging
 from dataclasses import asdict
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Dict
 from urllib.parse import urljoin
 
 import opentracing
@@ -12,11 +12,11 @@ from prices import Money, TaxedMoney
 
 from saleor.checkout.models import Checkout
 from saleor.core.prices import quantize_price
-from saleor.core.taxes import TaxError, zero_taxed_money
+from saleor.core.taxes import TaxError, zero_taxed_money, charge_taxes_on_shipping
 from saleor.discount import DiscountInfo
 from saleor.plugins.base_plugin import ConfigurationTypeField
 from saleor.plugins.error_codes import PluginErrorCode
-from saleor.plugins.avatax import _validate_checkout
+from saleor.plugins.avatax import _validate_checkout, _validate_order
 from saleor.plugins.avatax.plugin import AvataxPlugin
 from .utils import (
     AvataxConfiguration,
@@ -25,6 +25,7 @@ from .utils import (
     generate_request_data_from_checkout,
     get_api_url,
     get_checkout_tax_data,
+    get_order_tax_data,
     get_order_request_data,
     TRANSACTION_TYPE,
     process_checkout_metadata,
@@ -188,14 +189,19 @@ class AvataxExcisePlugin(AvataxPlugin):
 
         return max(total, zero_taxed_money(total.currency))
 
-    # def calculate_checkout_subtotal(
-    #     self,
-    #     checkout: "Checkout",
-    #     lines: Iterable["CheckoutLine"],
-    #     discounts: Iterable[DiscountInfo],
-    #     previous_value: TaxedMoney,
-    # ) -> TaxedMoney:
-    #     return previous_value
+    def _calculate_checkout_shipping(
+        self, currency: str, lines: List[Dict], shipping_price: TaxedMoney
+    ) -> TaxedMoney:
+        shipping_tax = Decimal(0.0)
+        shipping_net = shipping_price.net.amount
+        for line in lines:
+            if line["InvoiceLine"] == 0:
+                shipping_net += Decimal(line["TaxAmount"])
+                shipping_tax += Decimal(line["TaxAmount"])
+
+        shipping_gross = Money(amount=shipping_net + shipping_tax, currency=currency)
+        shipping_net = Money(amount=shipping_net, currency=currency)
+        return TaxedMoney(net=shipping_net, gross=shipping_gross)
 
     def calculate_checkout_shipping(
         self,
@@ -205,7 +211,29 @@ class AvataxExcisePlugin(AvataxPlugin):
         discounts: List["DiscountInfo"],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
-        return previous_value
+        base_shipping_price = previous_value
+
+        if not charge_taxes_on_shipping():
+            return base_shipping_price
+
+        if self._skip_plugin(previous_value):
+            return base_shipping_price
+
+        if not _validate_checkout(checkout_info, lines):
+            return base_shipping_price
+
+        response = get_checkout_tax_data(checkout_info, lines, discounts, self.config)
+        if not response or "error" in response:
+            return base_shipping_price
+
+        lines = response.get("TransactionTaxes", [])
+        if len(lines) == 0:
+            # Unable to determine currency when no tax lines exist.
+            return base_shipping_price
+
+        # ATE returns currency only at the line level, assume it matches all
+        currency = str(lines[0].get("Currency"))
+        return self._calculate_checkout_shipping(currency, lines, base_shipping_price)
 
     def preprocess_order_creation(
         self,
@@ -332,6 +360,28 @@ class AvataxExcisePlugin(AvataxPlugin):
         previous_value: TaxedMoney,
     ):
         return previous_value
+    
+    def calculate_order_shipping(
+        self, order: "Order", previous_value: TaxedMoney
+    ) -> TaxedMoney:
+        if self._skip_plugin(previous_value):
+            return previous_value
+
+        if not charge_taxes_on_shipping():
+            return previous_value
+
+        if not _validate_order(order):
+            return zero_taxed_money(order.total.currency)
+        taxes_data = get_order_tax_data(order, self.config, False)
+
+        lines = response.get("TransactionTaxes", [])
+        if len(lines) == 0:
+            # Unable to determine currency when no tax lines exist.
+            return base_shipping_price
+
+        # ATE returns currency only at the line level, assume it matches all
+        currency = str(lines[0].get("Currency"))
+        return self._calculate_checkout_shipping(currency, lines, order.shipping_method.price)
 
     def get_checkout_line_tax_rate(
         self,

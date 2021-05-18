@@ -1,0 +1,94 @@
+interactions:
+- request:
+    body: '{"EffectiveDate": "2021-05-18", "InvoiceDate": "2021-05-18", "TitleTransferCode":
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
+      "ProductCode": "123", "UnitPrice": "15.00", "UnitOfMeasure": null, "BilledUnits":
+      "3", "LineAmount": "15.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
+      "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
+      "USA", "DestinationJurisdiction": "TX", "DestinationAddress1": "1100 Congress
+      Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
+      "Austin", "DestinationPostalCode": "78701", "SaleCountryCode": "USA", "SaleAddress1":
+      "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "TX", "SaleCounty":
+      "", "SaleCity": "Austin", "SalePostalCode": "78701", "OriginCountryCode": "USA",
+      "OriginJurisdiction": "TX", "OriginCounty": "", "OriginCity": "Austin", "OriginPostalCode":
+      "78701", "OriginAddress1": "1100 Congress Ave", "OriginAddress2": "", "UserData":
+      "123", "CustomString1": null, "CustomString2": null, "CustomString3": null,
+      "CustomNumeric1": null, "CustomNumeric2": null, "CustomNumeric3": null}, {"InvoiceLine":
+      null, "ProductCode": "TAXFREIGHT", "UnitPrice": null, "UnitOfMeasure": "EA",
+      "BilledUnits": null, "LineAmount": "10.000", "AlternateUnitPrice": null, "TaxIncluded":
+      false, "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
+      "USA", "DestinationJurisdiction": "TX", "DestinationAddress1": "1100 Congress
+      Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
+      "Austin", "DestinationPostalCode": "78701", "SaleCountryCode": "USA", "SaleAddress1":
+      "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "TX", "SaleCounty":
+      "", "SaleCity": "Austin", "SalePostalCode": "78701", "OriginCountryCode": null,
+      "OriginJurisdiction": null, "OriginCounty": null, "OriginCity": null, "OriginPostalCode":
+      null, "OriginAddress1": null, "OriginAddress2": null, "UserData": "Shipping",
+      "CustomString1": null, "CustomString2": null, "CustomString3": null, "CustomNumeric1":
+      null, "CustomNumeric2": null, "CustomNumeric3": null}], "InvoiceNumber": null}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Authorization:
+      - Basic Og==
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '2136'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.25.1
+      x-company-id:
+      - '1337'
+    method: POST
+    uri: https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create
+  response:
+    body:
+      string: "{\r\n  \"UserTranId\": \"fc37e563-7114-4564-96c0-87c9b2f65992\",\r\n
+        \ \"TranId\": 40722210,\r\n  \"Status\": \"Success\",\r\n  \"ReturnCode\":
+        0,\r\n  \"TotalTaxAmount\": 0.0,\r\n  \"TransactionTaxes\": [],\r\n  \"TransactionErrors\":
+        [\r\n    {\r\n      \"SequenceId\": 1,\r\n      \"ErrorCode\": \"-895\",\r\n
+        \     \"ErrorMessage\": \"Populating Origin information using Destination
+        information for transaction line 2.\",\r\n      \"ErrorLevelInd\": \"Warning\",\r\n
+        \     \"TransactionLine\": 2\r\n    }\r\n  ],\r\n  \"UserReturnValue\": \"\"\r\n}"
+    headers:
+      Cache-Control:
+      - private
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '477'
+      Content-Security-Policy:
+      - 'default-src ''self''; font-src ''self'' use.typekit.net fonts.gstatic.com
+        data: ; img-src ''self'' p.typekit.net *.walkme.com *.cloudfront.net data:
+        ; script-src ''self'' ''unsafe-inline'' ''unsafe-eval'' use.typekit.net *.walkme.com
+        *.cloudfront.net; style-src  ''self'' ''unsafe-inline'' use.typekit.net; connect-src
+        ''self'' performance.typekit.net ec.walkme.com; frame-src ''self'' s3.amazonaws.com
+        *.s3.amazonaws.com;'
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Tue, 18 May 2021 18:05:54 GMT
+      Feature-Policy:
+      - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
+        'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
+        speaker 'none'; vibrate 'none'; fullscreen 'none'; payment 'none';
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - ''
+      Set-Cookie:
+      - ASP.NET_SessionId=5gmpcq0ogjct2vymiimcv5zt; path=/; HttpOnly; SameSite=Lax
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - sameorigin
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+version: 1

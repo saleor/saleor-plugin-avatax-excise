@@ -38,7 +38,7 @@ from saleor.checkout.fetch import fetch_checkout_info, fetch_checkout_lines
 def plugin_configuration(db, channel_USD):
     def set_configuration(
         username="api_user",
-        password="test",
+        password="8MZwEBl6PDg14XHddhJK",
         sandbox=True,
         channel=None,
         company_id="1337",
@@ -54,7 +54,7 @@ def plugin_configuration(db, channel_USD):
                 {"name": "Use sandbox", "value": sandbox},
                 {"name": "Company name", "value": company_id},
                 {"name": "Autocommit", "value": False},
-                {"name": "Shipping Product Code", "value": "FR020100"},
+                {"name": "Shipping Product Code", "value": "TAXFREIGHT"},
             ],
         }
         configuration = PluginConfiguration.objects.create(
@@ -365,6 +365,39 @@ def test_calculate_checkout_total(
     )
 
 
+@pytest.mark.vcr
+@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+def test_calculate_checkout_shipping(
+    reset_sequences,  # pylint: disable=unused-argument
+    checkout_with_item,
+    shipping_zone,
+    discount_info,
+    address_usa_tx,
+    address,
+    site_settings,
+    plugin_configuration,
+):
+    plugin_configuration()
+    manager = get_plugins_manager()
+    site_settings.company_address = address
+    site_settings.save()
+
+    checkout_with_item.shipping_address = address_usa_tx
+    checkout_with_item.shipping_method = shipping_zone.shipping_methods.get()
+    checkout_with_item.save()
+    lines = fetch_checkout_lines(checkout_with_item)
+    checkout_info = fetch_checkout_info(
+        checkout_with_item, lines, [discount_info], manager
+    )
+    shipping_price = manager.calculate_checkout_shipping(
+        checkout_info, lines, address, [discount_info]
+    )
+    shipping_price = quantize_price(shipping_price, shipping_price.currency)
+    assert shipping_price == TaxedMoney(
+        net=Money("10.00", "USD"), gross=Money("10.00", "USD")
+    )
+
+
 @patch("saleor.plugins.avatax.plugin.AvataxPlugin._skip_plugin")
 @override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
 def test_calculate_checkout_total_skip(
@@ -614,7 +647,7 @@ def test_order_created_calls_task(
         "use_sandbox": True,
         "company_name": conf["Company name"],
         "autocommit": False,
-        "shipping_product_code": "FR020100",
+        "shipping_product_code": "TAXFREIGHT",
     }
 
     api_post_request_task_mock.assert_called_once_with(
