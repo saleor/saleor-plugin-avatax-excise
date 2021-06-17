@@ -25,8 +25,8 @@ from .utils import (
     generate_request_data_from_checkout,
     get_api_url,
     get_checkout_tax_data,
-    get_order_tax_data,
     get_order_request_data,
+    get_order_tax_data,
     TRANSACTION_TYPE,
     process_checkout_metadata,
 )
@@ -165,17 +165,16 @@ class AvataxExcisePlugin(AvataxPlugin):
             logger.debug("Checkout Invalid in Calculate Checkout Total")
             return checkout_total
 
-        checkout = checkout_info.checkout  ## change this
+        checkout = checkout_info.checkout
         response = get_checkout_tax_data(checkout_info, lines, discounts, self.config)
         if not response or "Errors found" in response["Status"]:
             return checkout_total
 
         currency = checkout.currency
-
         tax = Money(Decimal(response.get("TotalTaxAmount", 0.0)), currency)
         net = checkout_total.net
-        total_gross = net + tax
-        taxed_total = quantize_price(TaxedMoney(net=net, gross=total_gross), currency)
+        gross = net + tax
+        taxed_total = quantize_price(TaxedMoney(net=net, gross=gross), currency)
         total = self._append_prices_of_not_taxed_lines(
             taxed_total,
             lines,
@@ -211,29 +210,25 @@ class AvataxExcisePlugin(AvataxPlugin):
         discounts: List["DiscountInfo"],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
-        base_shipping_price = previous_value
-
         if not charge_taxes_on_shipping():
-            return base_shipping_price
+            return previous_value
 
         if self._skip_plugin(previous_value):
-            return base_shipping_price
+            return previous_value
 
         if not _validate_checkout(checkout_info, lines):
-            return base_shipping_price
+            return previous_value
 
         response = get_checkout_tax_data(checkout_info, lines, discounts, self.config)
         if not response or "error" in response:
-            return base_shipping_price
+            return previous_value
 
-        lines = response.get("TransactionTaxes", [])
-        if len(lines) == 0:
-            # Unable to determine currency when no tax lines exist.
-            return base_shipping_price
+        tax_lines = response.get("TransactionTaxes", [])
+        if not tax_lines:
+            return previous_value
 
-        # ATE returns currency only at the line level, assume it matches all
-        currency = str(lines[0].get("Currency"))
-        return self._calculate_checkout_shipping(currency, lines, base_shipping_price)
+        currency = checkout_info.checkout.currency
+        return self._calculate_checkout_shipping(currency, tax_lines, previous_value)
 
     def preprocess_order_creation(
         self,
@@ -293,15 +288,32 @@ class AvataxExcisePlugin(AvataxPlugin):
     def order_created(self, order: "Order", previous_value: Any) -> Any:
         if not self.active:
             return previous_value
-        request_data = get_order_request_data(order)
+
+        request_data = get_order_request_data(order, self.config)
+        base_url = get_api_url(self.config.use_sandbox)
         transaction_url = urljoin(
-            get_api_url(self.config.use_sandbox),
+            base_url,
             "AvaTaxExcise/transactions/create",
         )
-        api_post_request_task.delay(
-            transaction_url, asdict(request_data), asdict(self.config), order.id
+        commit_url = urljoin(
+            base_url,
+            "AvaTaxExcise/transactions/{}/commit",
         )
 
+        api_post_request_task.delay(
+            transaction_url,
+            asdict(request_data),
+            asdict(self.config),
+            order.id,
+            commit_url,
+        )
+
+        return previous_value
+
+    def order_confirmed(self, order: "Order", previous_value: Any) -> Any:
+        return previous_value
+
+    def order_updated(self, order: "Order", previous_value: Any) -> Any:
         return previous_value
 
     def calculate_checkout_line_total(
@@ -316,39 +328,79 @@ class AvataxExcisePlugin(AvataxPlugin):
         if self._skip_plugin(previous_value):
             return previous_value
 
-        base_total = previous_value
         if not checkout_line_info.product.charge_taxes:
-            return base_total
+            return previous_value
 
         checkout = checkout_info.checkout
 
         if not _validate_checkout(checkout_info, lines):
-            return base_total
+            return previous_value
 
-        taxes_data = get_checkout_tax_data(checkout_info, lines, discounts, self.config)
+        response = get_checkout_tax_data(checkout_info, lines, discounts, self.config)
+        if not response or "Error" in response["Status"]:
+            return previous_value
 
-        if not taxes_data or "Error" in taxes_data["Status"]:
-            return base_total
+        tax = Decimal(response.get("TotalTaxAmount", "0.00"))
+        tax_lines = response.get("TransactionTaxes", [])
+        if not tax_lines:
+            return previous_value
 
-        tax_meta = json.dumps(taxes_data["TransactionTaxes"])
+        tax_meta = json.dumps(tax_lines)
         process_checkout_metadata(tax_meta, checkout)
 
-        line_tax_total = Decimal(0)
-
-        for line in taxes_data.get("TransactionTaxes", []):
-            if line.get("InvoiceLine") == checkout_line_info.line.id:
-                line_tax_total += Decimal(line.get("TaxAmount", 0.0))
-
-        if not line_tax_total > 0:
-            return base_total
-
         currency = checkout.currency
-        tax = Decimal(line_tax_total)
-        line_net = Decimal(base_total.net.amount)
-        line_gross = Money(amount=line_net + tax, currency=currency)
-        line_net = Money(amount=line_net, currency=currency)
+        net = Decimal(previous_value.net.amount)
+
+        line_net = Money(amount=net, currency=currency)
+        line_gross = Money(amount=net + tax, currency=currency)
 
         return quantize_price(TaxedMoney(net=line_net, gross=line_gross), currency)
+
+    def calculate_order_line_total(
+        self,
+        order: "Order",
+        order_line: "OrderLine",
+        variant: "ProductVariant",
+        product: "Product",
+        previous_value: TaxedMoney,
+    ) -> TaxedMoney:
+        if self._skip_plugin(previous_value):
+            return previous_value
+
+        if not product.charge_taxes:
+            return previous_value
+
+        if not _validate_order(order):
+            return zero_taxed_money(order.total.currency)
+
+        taxes_data = self._get_order_tax_data(order, previous_value)
+        return self._calculate_line_total_price(taxes_data, order_line.id, previous_value)
+
+    @staticmethod
+    def _calculate_line_total_price(
+        taxes_data: Dict[str, Any],
+        line_id: str,
+        previous_value: TaxedMoney,
+    ):
+        if not taxes_data or "error" in taxes_data:
+            return previous_value
+
+        tax = Decimal("0.00")
+        currency = ''
+        for line in taxes_data.get("TransactionTaxes", []):
+            if line.get("InvoiceLine") == line_id:
+                tax += Decimal(line.get("TaxAmount", "0.00"))
+                if not currency:
+                    currency = line.get('Currency')
+
+        if tax > 0 and currency:
+            net = Decimal(previous_value.net.amount)
+
+            line_net = Money(amount=net, currency=currency)
+            line_gross = Money(amount=net + tax, currency=currency)
+            return TaxedMoney(net=line_net, gross=line_gross)
+
+        return previous_value
 
     def calculate_checkout_line_unit_price(
         self,
@@ -360,7 +412,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         previous_value: TaxedMoney,
     ):
         return previous_value
-    
+
     def calculate_order_shipping(
         self, order: "Order", previous_value: TaxedMoney
     ) -> TaxedMoney:
@@ -372,16 +424,14 @@ class AvataxExcisePlugin(AvataxPlugin):
 
         if not _validate_order(order):
             return zero_taxed_money(order.total.currency)
-        taxes_data = get_order_tax_data(order, self.config, False)
 
-        lines = response.get("TransactionTaxes", [])
-        if len(lines) == 0:
-            # Unable to determine currency when no tax lines exist.
-            return base_shipping_price
+        response = get_order_tax_data(order, self.config, False)
+        tax_lines = response.get("TransactionTaxes", [])
+        if not tax_lines:
+            return previous_value
 
-        # ATE returns currency only at the line level, assume it matches all
-        currency = str(lines[0].get("Currency"))
-        return self._calculate_checkout_shipping(currency, lines, order.shipping_method.price)
+        currency = order.currency
+        return self._calculate_checkout_shipping(currency, tax_lines, previous_value)
 
     def get_checkout_line_tax_rate(
         self,
@@ -403,3 +453,39 @@ class AvataxExcisePlugin(AvataxPlugin):
         previous_value: Decimal,
     ):
         return previous_value
+
+    def _get_checkout_tax_data(
+        self,
+        checkout_info: "CheckoutInfo",
+        lines_info: Iterable["CheckoutLineInfo"],
+        discounts: Iterable[DiscountInfo],
+        previous_value: Decimal,
+    ):
+        if self._skip_plugin(previous_value):
+            return None
+
+        valid = _validate_checkout(checkout_info, lines_info)
+        if not valid:
+            return None
+
+        response = get_checkout_tax_data(
+            checkout_info, lines_info, discounts, self.config
+        )
+        if not response or "error" in response:
+            return None
+
+        return response
+
+    def _get_order_tax_data(self, order: "Order", previous_value: Decimal):
+        if self._skip_plugin(previous_value):
+            return None
+
+        valid = _validate_order(order)
+        if not valid:
+            return None
+
+        response = get_order_tax_data(order, self.config, False)
+        if not response or "error" in response:
+            return None
+
+        return response

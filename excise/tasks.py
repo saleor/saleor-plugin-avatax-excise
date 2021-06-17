@@ -8,7 +8,12 @@ from saleor.celeryconf import app
 from saleor.core.taxes import TaxError
 from saleor.order.events import external_notification_event
 from saleor.order.models import Order
-from .utils import AvataxConfiguration, api_post_request, get_metadata_key
+from .utils import (
+    AvataxConfiguration,
+    api_post_request,
+    api_commit_transaction,
+    get_metadata_key,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +21,7 @@ logger = logging.getLogger(__name__)
 @app.task(
     autoretry_for=(TaxError,), retry_backoff=60, retry_kwargs={"max_retries": 5},
 )
-def api_post_request_task(transaction_url, data, config, order_id):
+def api_post_request_task(transaction_url, data, config, order_id, commit_url=None):
     config = AvataxConfiguration(**config)
     order = Order.objects.filter(id=order_id).first()
     if not order:
@@ -52,6 +57,26 @@ def api_post_request_task(transaction_url, data, config, order_id):
             order.token,
             response,
         )
+    else:
+        user_tran_id = response.get('UserTranId')
+        if config.autocommit and commit_url and user_tran_id:
+            commit_url = commit_url.format(user_tran_id)
+            response = api_commit_transaction(
+                commit_url,
+                config
+            )
+            errors = response.get("TransactionErrors", [])
+            avatax_msg = ""
+            for error in errors:
+                avatax_msg += error.get("ErrorMessage", "")
+            msg = f"Order committed to Avatax Excise. Order ID: {order.token}"
+            if not response or "Error" in response.get("Status"):
+                msg = f"Unable to commit order to Avatax Excise. {avatax_msg}"
+                logger.warning(
+                    "Unable to commit order %s to Avatax Excise. Response %s",
+                    order.token,
+                    response,
+                )
 
     tax_item = {get_metadata_key("itemized_taxes"): json.dumps(
         response.get("TransactionTaxes"))}
