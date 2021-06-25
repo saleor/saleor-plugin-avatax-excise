@@ -38,7 +38,7 @@ from saleor.checkout.fetch import fetch_checkout_info, fetch_checkout_lines
 def plugin_configuration(db, channel_USD):
     def set_configuration(
         username="api_user",
-        password="8MZwEBl6PDg14XHddhJK",
+        password="ydi5ycDSdDrs5p",
         sandbox=True,
         channel=None,
         company_id="1337",
@@ -221,7 +221,10 @@ def test_calculate_checkout_line_total(
     product.charge_taxes = True
     product.save()
     product.product_type.save()
+
     discounts = [discount_info] if with_discount else None
+    discount_amount = Decimal("1.00") if with_discount else Decimal("0.00")
+    checkout_with_item.discount_amount = discount_amount
 
     lines = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(checkout_with_item, lines, discounts, manager)
@@ -351,6 +354,8 @@ def test_calculate_checkout_total(
     product_with_single_variant.category = non_default_category
     product_with_single_variant.save()
     discounts = [discount_info] if with_discount else None
+    discount_amount = Decimal("1.00") if with_discount else Decimal("0.00")
+    checkout_with_item.discount_amount = discount_amount
     checkout_info = fetch_checkout_info(checkout_with_item, [], discounts, manager)
 
     add_variant_to_checkout(checkout_info, product_with_single_variant.variants.get())
@@ -636,8 +641,14 @@ def test_order_created_calls_task(
 
     manager.order_created(order_with_lines)
 
-    transaction_url = (
-        "https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create"
+    base_url = "https://excisesbx.avalara.com/"
+    transaction_url = urljoin(
+        base_url,
+        "api/v1/AvaTaxExcise/transactions/create"
+    )
+    commit_url = urljoin(
+        base_url,
+        "api/v1/AvaTaxExcise/transactions/{}/commit"
     )
     data = get_order_request_data(order_with_lines)
     conf = {data["name"]: data["value"] for data in config.configuration}
@@ -651,7 +662,11 @@ def test_order_created_calls_task(
     }
 
     api_post_request_task_mock.assert_called_once_with(
-        transaction_url, asdict(data), configuration, order_with_lines.id
+        transaction_url,
+        asdict(data),
+        configuration,
+        order_with_lines.id,
+        commit_url
     )
 
 

@@ -19,8 +19,7 @@ from requests.auth import HTTPBasicAuth
 
 from saleor.checkout import base_calculations
 from saleor.checkout.models import Checkout
-
-
+from saleor.order.utils import get_total_order_discount
 from saleor.checkout.fetch import fetch_checkout_lines
 from saleor.core.taxes import TaxError
 from saleor.plugins.avatax import (
@@ -60,6 +59,64 @@ class AvataxConfiguration:
     company_name: str = "DEFAULT"
     autocommit: bool = False
     shipping_product_code: str = "TAXFREIGHT"
+
+
+@dataclass
+class TransactionLine:
+    InvoiceLine: Optional[int]
+    ProductCode: str
+    UnitPrice: Optional[Decimal]
+    UnitOfMeasure: Optional[str]
+    BilledUnits: Optional[Decimal]
+    LineAmount: Optional[Decimal]
+    AlternateUnitPrice: Optional[Decimal]
+    TaxIncluded: bool
+    UnitQuantity: Optional[int]
+    UnitQuantityUnitOfMeasure: Optional[str]
+    DestinationCountryCode: str
+    """ISO 3166-1 alpha-3 code"""
+    DestinationJurisdiction: str
+    DestinationAddress1: Optional[str]
+    DestinationAddress2: Optional[str]
+    DestinationCounty: Optional[str]
+    DestinationCity: str
+    DestinationPostalCode: str
+    SaleCountryCode: str
+    SaleAddress1: Optional[str]
+    SaleAddress2: Optional[str]
+    SaleJurisdiction: str
+    SaleCounty: Optional[str]
+    SaleCity: str
+    SalePostalCode: str
+    Discounted: Optional[bool] = False
+
+    OriginCountryCode: Optional[str] = None
+    OriginJurisdiction: Optional[str] = None
+    OriginCounty: Optional[str] = None
+    OriginCity: Optional[str] = None
+    OriginPostalCode: Optional[str] = None
+    OriginAddress1: Optional[str] = None
+    OriginAddress2: Optional[str] = None
+
+    UserData: Optional[str] = None
+    CustomString1: Optional[str] = None
+    CustomString2: Optional[str] = None
+    CustomString3: Optional[str] = None
+    CustomNumeric1: Optional[Decimal] = None
+    CustomNumeric2: Optional[Decimal] = None
+    CustomNumeric3: Optional[Decimal] = None
+
+
+@dataclass
+class TransactionCreateRequestData:
+    EffectiveDate: str
+    InvoiceDate: str
+    TitleTransferCode: str
+    TransactionType: str
+    TransactionLines: List[TransactionLine]
+    InvoiceNumber: Optional[str] = None
+    Discount: Optional[Decimal] = Decimal("0.00")
+    UserTranId: Optional[str] = None
 
 
 def get_metadata_key(key_name: str):
@@ -121,75 +178,41 @@ def api_post_request(
     return json_response  # type: ignore
 
 
-@dataclass
-class TransactionLine:
-    InvoiceLine: Optional[int]
-    ProductCode: str
-    UnitPrice: Optional[Decimal]
-    UnitOfMeasure: Optional[str]
-    BilledUnits: Optional[Decimal]
-    LineAmount: Optional[Decimal]
-    AlternateUnitPrice: Optional[Decimal]
-    TaxIncluded: bool
-    UnitQuantity: Optional[int]
-    UnitQuantityUnitOfMeasure: Optional[str]
-    DestinationCountryCode: str
-    """ISO 3166-1 alpha-3 code"""
-    DestinationJurisdiction: str
-    DestinationAddress1: Optional[str]
-    DestinationAddress2: Optional[str]
-    DestinationCounty: Optional[str]
-    DestinationCity: str
-    DestinationPostalCode: str
-    SaleCountryCode: str
-    SaleAddress1: Optional[str]
-    SaleAddress2: Optional[str]
-    SaleJurisdiction: str
-    SaleCounty: Optional[str]
-    SaleCity: str
-    SalePostalCode: str
+def api_commit_transaction(
+    url: str, config: AvataxConfiguration
+    ) -> Dict[str, Any]:
+    response = None
+    try:
+        auth = HTTPBasicAuth(config.username_or_account, config.password_or_license)
+        headers = {
+            "x-company-id": config.company_name,
+            "Content-Type": "application/json",
+        }
 
-    OriginCountryCode: Optional[str] = None
-    OriginJurisdiction: Optional[str] = None
-    OriginCounty: Optional[str] = None
-    OriginCity: Optional[str] = None
-    OriginPostalCode: Optional[str] = None
-    OriginAddress1: Optional[str] = None
-    OriginAddress2: Optional[str] = None
+        response = requests.post(
+            url,
+            headers=headers,
+            auth=auth,
+            data="{}"
+        )
+        if response.status_code == 401:
+            logger.exception("Avatax Excise Authentication Error - Invalid Credentials")
+            return {}
+        json_response = response.json()
+        if json_response.get("Status") == "Errors found":
+            logger.exception("Avatax Excise response contains errors %s", json_response)
+            return json_response
 
-    UserData: Optional[str] = None
-    CustomString1: Optional[str] = None
-    CustomString2: Optional[str] = None
-    CustomString3: Optional[str] = None
-    CustomNumeric1: Optional[Decimal] = None
-    CustomNumeric2: Optional[Decimal] = None
-    CustomNumeric3: Optional[Decimal] = None
-
-
-@dataclass
-class TransactionCreateRequestData:
-    EffectiveDate: str
-    InvoiceDate: str
-    TitleTransferCode: str
-    TransactionType: str
-    TransactionLines: List[TransactionLine]
-    InvoiceNumber: Optional[str] = None
-
-
-def generate_request_data(
-    transaction_type: str, lines: List[TransactionLine], invoice_number: Optional[str]
-):
-    today_date = str(date.today())  # Does not seem timezone safe
-    data = TransactionCreateRequestData(
-        EffectiveDate=today_date,
-        InvoiceDate=today_date,
-        InvoiceNumber=invoice_number,
-        TitleTransferCode="DEST",
-        TransactionType=transaction_type,
-        TransactionLines=lines,
-    )
-
-    return data
+    except requests.exceptions.RequestException:
+        logger.exception(f"Commit transaction failed {url}")
+        return {}
+    except json.JSONDecodeError:
+        content = response.content if response else "Unable to find the response"
+        logger.exception(
+            "Unable to decode the response from Avatax Excise. Response: %s", content
+        )
+        return {}
+    return json_response  # type: ignore
 
 
 def append_line_to_data(
@@ -201,6 +224,7 @@ def append_line_to_data(
     variant: "ProductVariant",
     shipping_address: "Address",
     variant_channel_listing: "ProductVariantChannelListing",
+    discounted: bool = False,
 ):
     """Abstract line data regardless of Checkout or Order."""
     stock = variant.stocks.for_country_and_channel(
@@ -251,6 +275,7 @@ def append_line_to_data(
             OriginCounty=warehouse_address.city_area if warehouse_address else None,
             OriginPostalCode=warehouse_address.postal_code if warehouse_address else None,
             UserData=variant.sku,
+            Discounted=discounted,
             CustomString1=variant.get_value_from_private_metadata(
                 get_metadata_key("CustomString1")
             ),
@@ -315,10 +340,34 @@ def append_shipping_to_data(
         )
 
 
+def generate_request_data(
+    transaction_type: str,
+    lines: List[TransactionLine],
+    invoice_number: Optional[str],
+    user_tran_id: Optional[str] = None,
+    discount: Optional[Decimal] = Decimal("0.00"),
+):
+
+    today_date = str(date.today())  # Does not seem timezone safe
+    data = TransactionCreateRequestData(
+        EffectiveDate=today_date,
+        InvoiceDate=today_date,
+        InvoiceNumber=invoice_number,
+        TitleTransferCode="DEST",
+        TransactionType=transaction_type,
+        TransactionLines=lines,
+        UserTranId=user_tran_id,
+        Discount=discount,
+    )
+
+    return data
+
+
 def get_checkout_lines_data(
     checkout_info: "CheckoutInfo",
     lines_info: Iterable["CheckoutLineInfo"],
     config: AvataxConfiguration,
+    discounted: bool = False,
     discounts=None,
 ) -> List[TransactionLine]:
     data: List[TransactionLine] = []
@@ -339,6 +388,7 @@ def get_checkout_lines_data(
             tax_included=tax_included,
             variant=line_info.line.variant,
             variant_channel_listing=line_info.channel_listing,
+            discounted=discounted,
         )
 
     append_shipping_to_data(
@@ -350,7 +400,40 @@ def get_checkout_lines_data(
     return data
 
 
-def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine]:
+def generate_request_data_from_checkout(
+    checkout_info: "CheckoutInfo",
+    lines_info: Iterable["CheckoutLineInfo"],
+    config: AvataxConfiguration,
+    transaction_token=None,
+    transaction_type=TRANSACTION_TYPE,
+    discounts=None,
+):
+    discount_amount = Decimal(checkout_info.checkout.discount_amount)
+    invoice_number = None
+    user_tran_id = None
+    discounted = True if discount_amount > 0 else False
+
+    # Do not discount product price
+    lines = get_checkout_lines_data(
+        checkout_info,
+        lines_info,
+        config,
+        discounts=None,
+        discounted=discounted,
+    )
+    channel = checkout_info.channel
+
+    data = generate_request_data(
+        transaction_type,
+        lines=lines,
+        invoice_number=invoice_number,
+        user_tran_id=user_tran_id,
+        discount=discount_amount
+    )
+    return data
+
+
+def get_order_lines_data(order: "Order", discounted:bool=False, discounts=None) -> List[TransactionLine]:
 
     data: List[TransactionLine] = []
     order_lines = order.lines.all()
@@ -379,34 +462,8 @@ def get_order_lines_data(order: "Order", discounts=None) -> List[TransactionLine
             tax_included=tax_included,
             variant=variant,
             variant_channel_listing=variant_channel_listing,
+            discounted=discounted,
         )
-    return data
-
-
-def generate_request_data_from_checkout(
-    checkout_info: "CheckoutInfo",
-    lines_info: Iterable["CheckoutLineInfo"],
-    config: AvataxConfiguration,
-    transaction_token=None,
-    transaction_type=TRANSACTION_TYPE,
-    discounts=None,
-):
-    lines = get_checkout_lines_data(checkout_info, lines_info, config, discounts)
-    data = generate_request_data(transaction_type, lines=lines, invoice_number=None)
-    return data
-
-
-def generate_request_data_from_order(
-    order: "Order",
-    transaction_type=TRANSACTION_TYPE,
-    discounts=None,
-):
-    lines = get_order_lines_data(order, discounts)
-    data = generate_request_data(
-        transaction_type,
-        lines=lines,
-        invoice_number=order.pk,
-    )
     return data
 
 
@@ -428,6 +485,26 @@ def _fetch_new_taxes_data(
     else:
         # cache failed response to limit hits to avatax.
         cache.set(data_cache_key, (data, response), 10)
+    return response
+
+
+def commit_transaction(
+    user_tran_id: str,
+    config: AvataxConfiguration,
+) -> Dict[str, Any]:
+
+    commit_url = urljoin(
+        get_api_url(config.use_sandbox),
+        f"AvaTaxExcise/transactions/{user_tran_id}/commit",
+    )
+
+    with opentracing.global_tracer().start_active_span(
+        "avatax_excise.transactions.commit"
+    ) as scope:
+        span = scope.span
+        span.set_tag(opentracing.tags.COMPONENT, "tax")
+        span.set_tag("service.name", "avatax_excise")
+        response = api_commit_transaction(commit_url, config)
     return response
 
 
@@ -462,12 +539,16 @@ def get_checkout_tax_data(
     return get_cached_response_or_fetch(data, str(checkout_info.checkout.token), config)
 
 
-def get_order_request_data(order: "Order", transaction_type=TRANSACTION_TYPE):
-    lines = get_order_lines_data(order)
+def get_order_request_data(order: "Order", config=AvataxConfiguration):
+    discount_total = get_total_order_discount(order)
+    discounted = True if discount_total.amount > 0 else False
+
+    lines = get_order_lines_data(order, discounted=discounted)
     data = generate_request_data(
-        transaction_type=transaction_type,
+        transaction_type=TRANSACTION_TYPE,
         lines=lines,
-        invoice_number=order.pk,
+        invoice_number=f"{order.pk}",
+        discount=discount_total.amount,
     )
     return data
 
@@ -475,7 +556,7 @@ def get_order_request_data(order: "Order", transaction_type=TRANSACTION_TYPE):
 def get_order_tax_data(
     order: "Order", config: AvataxConfiguration, force_refresh=False
 ) -> Dict[str, Any]:
-    data = generate_request_data_from_order(order)
+    data = get_order_request_data(order)
 
     response = get_cached_response_or_fetch(
         data, "order_%s" % order.token, config, force_refresh
