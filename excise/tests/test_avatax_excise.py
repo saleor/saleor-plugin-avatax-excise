@@ -34,11 +34,11 @@ from ..plugin import AvataxExcisePlugin
 @pytest.fixture
 def plugin_configuration(db, channel_USD):
     def set_configuration(
-        username="api_user",
-        password="ydi5ycDSdDrs5p",
+        username="test",
+        password="test",
+        company_id="test",
         sandbox=True,
         channel=None,
-        company_id="1337",
     ):
         channel = channel or channel_USD
         data = {
