@@ -10,17 +10,23 @@ import opentracing.tags
 from django.core.exceptions import ValidationError
 from prices import Money, TaxedMoney
 
-from saleor.checkout.models import Checkout
 from saleor.core.prices import quantize_price
-from saleor.core.taxes import TaxError, zero_taxed_money, charge_taxes_on_shipping
+from saleor.core.taxes import (
+    TaxError,
+    zero_taxed_money,
+    charge_taxes_on_shipping
+)
 from saleor.discount import DiscountInfo
 from saleor.plugins.base_plugin import ConfigurationTypeField
 from saleor.plugins.error_codes import PluginErrorCode
-from saleor.plugins.avatax import _validate_checkout, _validate_order
+from saleor.plugins.avatax import (
+    _validate_checkout,
+    _validate_order,
+    api_get_request
+)
 from saleor.plugins.avatax.plugin import AvataxPlugin
 from .utils import (
     AvataxConfiguration,
-    api_get_request,
     api_post_request,
     generate_request_data_from_checkout,
     get_api_url,
@@ -35,10 +41,9 @@ from .tasks import api_post_request_task
 if TYPE_CHECKING:
     # flake8: noqa
     from saleor.account.models import Address
-    from saleor.channel.models import Channel
-    from saleor.checkout import CheckoutLineInfo
-    from saleor.checkout.models import CheckoutLine
-    from saleor.order.models import Order
+    from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
+    from saleor.order.models import Order, OrderLine
+    from saleor.product.models import Product, ProductVariant
     from saleor.plugins.models import PluginConfiguration
 
 logger = logging.getLogger(__name__)
@@ -69,7 +74,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         },
         "Use sandbox": {
             "type": ConfigurationTypeField.BOOLEAN,
-            "help_text": "Determines if Saleor should use Avatax Excise sandbox API.",
+            "help_text": "Determines if Saleor should use Avatax "
+            "Excise sandbox API.",
             "label": "Use sandbox",
         },
         "Company name": {
@@ -85,9 +91,11 @@ class AvataxExcisePlugin(AvataxPlugin):
         },
         "Shipping Product Code": {
             "type": ConfigurationTypeField.STRING,
-            "help_text": "Avalara Excise Product Code used to represent shipping. "
-            "This Product should set the Avatax Tax Code to FR020000 or other freight tax code. See "
-            "https://taxcode.avatax.avalara.com/tree?tree=freight-and-freight-related-charges&tab=interactive",
+            "help_text": "Avalara Excise Product Code used to represent "
+            "shipping. This Product should set the Avatax Tax Code to "
+            "FR020000 or other freight tax code. See "
+            "https://taxcode.avatax.avalara.com/tree"
+            "?tree=freight-and-freight-related-charges&tab=interactive",
             "label": "Shipping Product Code",
         },
     }
@@ -95,7 +103,10 @@ class AvataxExcisePlugin(AvataxPlugin):
     def __init__(self, *args, **kwargs):
         super(AvataxPlugin, self).__init__(*args, **kwargs)
         # Convert to dict to easier take config elements
-        configuration = {item["name"]: item["value"] for item in self.configuration}
+        configuration = {
+            item["name"]: item["value"]
+            for item in self.configuration
+        }
 
         self.config = AvataxConfiguration(
             username_or_account=configuration["Username or account"],
@@ -107,9 +118,12 @@ class AvataxExcisePlugin(AvataxPlugin):
         )
 
     @classmethod
-    def validate_authentication(cls, plugin_configuration: "PluginConfiguration"):
+    def validate_authentication(
+        cls, plugin_configuration: "PluginConfiguration"
+    ):
         conf = {
-            data["name"]: data["value"] for data in plugin_configuration.configuration
+            data["name"]: data["value"]
+            for data in plugin_configuration.configuration
         }
         url = urljoin(get_api_url(conf["Use sandbox"]), "utilities/ping")
         response = api_get_request(
@@ -125,7 +139,9 @@ class AvataxExcisePlugin(AvataxPlugin):
             )
 
     @classmethod
-    def validate_plugin_configuration(cls, plugin_configuration: "PluginConfiguration"):
+    def validate_plugin_configuration(
+        cls, plugin_configuration: "PluginConfiguration"
+    ):
         """Validate if provided configuration is correct."""
         missing_fields = []
         configuration = plugin_configuration.configuration
@@ -166,15 +182,21 @@ class AvataxExcisePlugin(AvataxPlugin):
             return checkout_total
 
         checkout = checkout_info.checkout
-        response = get_checkout_tax_data(checkout_info, lines, discounts, self.config)
+        response = get_checkout_tax_data(
+            checkout_info, lines, discounts, self.config
+        )
         if not response or "Errors found" in response["Status"]:
             return checkout_total
 
         currency = checkout.currency
+        discount = checkout.discount
         tax = Money(Decimal(response.get("TotalTaxAmount", 0.0)), currency)
         net = checkout_total.net
         gross = net + tax
-        taxed_total = quantize_price(TaxedMoney(net=net, gross=gross), currency)
+        taxed_total = quantize_price(
+            TaxedMoney(net=net, gross=gross),
+            currency
+        )
         total = self._append_prices_of_not_taxed_lines(
             taxed_total,
             lines,
@@ -182,9 +204,8 @@ class AvataxExcisePlugin(AvataxPlugin):
             discounts,
         )
 
-        voucher_value = checkout.discount
-        if voucher_value:
-            total -= voucher_value
+        if discount:
+            total -= discount
 
         return max(total, zero_taxed_money(total.currency))
 
@@ -198,7 +219,9 @@ class AvataxExcisePlugin(AvataxPlugin):
                 shipping_net += Decimal(line["TaxAmount"])
                 shipping_tax += Decimal(line["TaxAmount"])
 
-        shipping_gross = Money(amount=shipping_net + shipping_tax, currency=currency)
+        shipping_gross = Money(
+            amount=shipping_net + shipping_tax, currency=currency
+        )
         shipping_net = Money(amount=shipping_net, currency=currency)
         return TaxedMoney(net=shipping_net, gross=shipping_gross)
 
@@ -219,7 +242,9 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not _validate_checkout(checkout_info, lines):
             return previous_value
 
-        response = get_checkout_tax_data(checkout_info, lines, discounts, self.config)
+        response = get_checkout_tax_data(
+            checkout_info, lines, discounts, self.config
+        )
         if not response or "error" in response:
             return previous_value
 
@@ -228,7 +253,9 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
 
         currency = checkout_info.checkout.currency
-        return self._calculate_checkout_shipping(currency, tax_lines, previous_value)
+        return self._calculate_checkout_shipping(
+            currency, tax_lines, previous_value
+        )
 
     def preprocess_order_creation(
         self,
@@ -237,9 +264,9 @@ class AvataxExcisePlugin(AvataxPlugin):
         lines: Optional[Iterable["CheckoutLineInfo"]],
         previous_value: Any,
     ):
-        """Ensure all the data is correct and we can proceed with creation of order.
-
-        Raise an error when can't receive taxes.
+        """
+        Ensure all the data is correct and we can proceed with creation of
+        order. Raise an error when can't receive taxes.
         """
 
         if self._skip_plugin(previous_value):
@@ -255,7 +282,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not data.TransactionLines:
             return previous_value
         transaction_url = urljoin(
-            get_api_url(self.config.use_sandbox), "AvaTaxExcise/transactions/create"
+            get_api_url(self.config.use_sandbox),
+            "AvaTaxExcise/transactions/create"
         )
         with opentracing.global_tracer().start_active_span(
             "avatax_excise.transactions.create"
@@ -274,8 +302,8 @@ class AvataxExcisePlugin(AvataxPlugin):
                         customer_msg += error_message
                     error_code = response.get("ErrorCode", "")
                     logger.warning(
-                        "Unable to calculate taxes for checkout %s, error_code: %s, "
-                        "error_msg: %s",
+                        "Unable to calculate taxes for checkout %s"
+                        "error_code: %s error_msg: %s",
                         checkout_info.checkout.token,
                         error_code,
                         error_message,
@@ -332,11 +360,12 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
 
         checkout = checkout_info.checkout
-
         if not _validate_checkout(checkout_info, lines):
             return previous_value
 
-        response = get_checkout_tax_data(checkout_info, lines, discounts, self.config)
+        response = get_checkout_tax_data(
+            checkout_info, lines, discounts, self.config
+        )
         if not response or "Error" in response["Status"]:
             return previous_value
 
@@ -354,7 +383,10 @@ class AvataxExcisePlugin(AvataxPlugin):
         line_net = Money(amount=net, currency=currency)
         line_gross = Money(amount=net + tax, currency=currency)
 
-        return quantize_price(TaxedMoney(net=line_net, gross=line_gross), currency)
+        return quantize_price(
+            TaxedMoney(net=line_net, gross=line_gross),
+            currency
+        )
 
     def calculate_order_line_total(
         self,
@@ -374,7 +406,9 @@ class AvataxExcisePlugin(AvataxPlugin):
             return zero_taxed_money(order.total.currency)
 
         taxes_data = self._get_order_tax_data(order, previous_value)
-        return self._calculate_line_total_price(taxes_data, order_line.id, previous_value)
+        return self._calculate_line_total_price(
+            taxes_data, order_line.id, previous_value
+        )
 
     @staticmethod
     def _calculate_line_total_price(
@@ -431,7 +465,9 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
 
         currency = order.currency
-        return self._calculate_checkout_shipping(currency, tax_lines, previous_value)
+        return self._calculate_checkout_shipping(
+            currency, tax_lines, previous_value
+        )
 
     def get_checkout_line_tax_rate(
         self,

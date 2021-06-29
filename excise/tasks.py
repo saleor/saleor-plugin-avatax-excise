@@ -19,19 +19,27 @@ logger = logging.getLogger(__name__)
 
 
 @app.task(
-    autoretry_for=(TaxError,), retry_backoff=60, retry_kwargs={"max_retries": 5},
+    autoretry_for=(TaxError,),
+    retry_backoff=60,
+    retry_kwargs={"max_retries": 5},
 )
-def api_post_request_task(transaction_url, data, config, order_id, commit_url=None):
+def api_post_request_task(
+    transaction_url, data, config, order_id, commit_url=None
+):
     config = AvataxConfiguration(**config)
     order = Order.objects.filter(id=order_id).first()
     if not order:
-        logger.error(
-            "Unable to send the order %s to Avatax Excise. Order doesn't exist.",
-            order_id,
+        msg = (
+            f"Unable to send the order {order_id} to Avatax Excise. "
+            "Order doesn't exist."
         )
+        logger.error(msg)
         return
     if not data.get("TransactionLines"):
-        msg = "The order doesn't have any line which should be sent to Avatax Excise."
+        msg = (
+            "The order doesn't have any line which should be "
+            "sent to Avatax Excise."
+        )
         external_notification_event(
             order=order, user=None, message=msg, parameters=None
         )
@@ -78,12 +86,16 @@ def api_post_request_task(transaction_url, data, config, order_id, commit_url=No
                     response,
                 )
 
-    tax_item = {get_metadata_key("itemized_taxes"): json.dumps(
-        response.get("TransactionTaxes"))}
+    tax_item = {
+        get_metadata_key("itemized_taxes"): json.dumps(
+            response.get("TransactionTaxes")
+        )
+    }
     order.store_value_in_metadata(items=tax_item)
     order.save()
 
     external_notification_event(
-        order=order, user=None, message=msg, parameters=None)
+        order=order, user=None, message=msg, parameters=None
+    )
     if not response or "Error" in response.get("Status"):
         raise TaxError

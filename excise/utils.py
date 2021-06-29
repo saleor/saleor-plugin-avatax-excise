@@ -2,44 +2,36 @@ import dataclasses
 import json
 import logging
 from dataclasses import dataclass
-from datetime import date
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 from urllib.parse import urljoin
-from uuid import UUID
 
 import opentracing
 import opentracing.tags
 import requests
-from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from requests.auth import HTTPBasicAuth
 
 from saleor.checkout import base_calculations
 from saleor.checkout.models import Checkout
-from saleor.order.utils import get_total_order_discount
-from saleor.checkout.fetch import fetch_checkout_lines
 from saleor.core.taxes import TaxError
+from saleor.order.utils import get_total_order_discount
+from saleor.shipping.models import ShippingMethodChannelListing
 from saleor.plugins.avatax import (
     CACHE_KEY,
     CACHE_TIME,
-    TransactionType,
-    AvataxConfiguration,
-    api_get_request,
     taxes_need_new_fetch,
-    _retrieve_from_cache,
 )
 
 if TYPE_CHECKING:
     # flake8: noqa
     from saleor.account.models import Address
-    from saleor.checkout.models import Checkout, CheckoutLine
+    from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
     from saleor.order.models import Order
     from saleor.product.models import (
-        Product,
-        ProductType,
         ProductVariant,
         ProductVariantChannelListing,
     )
@@ -47,8 +39,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-TRANSACTION_TYPE = "DIRECT"  # Must be DIRECT for direct to consumer e-commerece
-SHIPPING_UNIT_OF_MEASURE = "EA"  # "Each"
+# Must be DIRECT for direct to consumer e-commerece
+TRANSACTION_TYPE = "DIRECT"
+SHIPPING_UNIT_OF_MEASURE = "EA"
 
 
 @dataclass
@@ -145,7 +138,10 @@ def api_post_request(
 ) -> Dict[str, Any]:
     response = None
     try:
-        auth = HTTPBasicAuth(config.username_or_account, config.password_or_license)
+        auth = HTTPBasicAuth(
+            config.username_or_account,
+            config.password_or_license
+        )
         headers = {
             "x-company-id": config.company_name,
             "Content-Type": "application/json",
@@ -159,20 +155,28 @@ def api_post_request(
         )
         logger.debug("Hit to Avatax Excise to calculate taxes %s", url)
         if response.status_code == 401:
-            logger.exception("Avatax Excise Authentication Error - Invalid Credentials")
+            logger.exception(
+                "Avatax Excise Authentication Error - Invalid Credentials"
+            )
             return {}
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
-            logger.exception("Avatax Excise response contains errors %s", json_response)
+            logger.exception(
+                "Avatax Excise response contains errors %s",
+                json_response
+            )
             return json_response
 
     except requests.exceptions.RequestException:
         logger.exception("Fetching taxes failed %s", url)
         return {}
     except json.JSONDecodeError:
-        content = response.content if response else "Unable to find the response"
+        content = "Unable to find the response"
+        if response:
+            content = response.content
         logger.exception(
-            "Unable to decode the response from Avatax Excise. Response: %s", content
+            "Unable to decode the response from Avatax Excise. "
+            "Response: %s", content
         )
         return {}
     return json_response  # type: ignore
@@ -180,10 +184,13 @@ def api_post_request(
 
 def api_commit_transaction(
     url: str, config: AvataxConfiguration
-    ) -> Dict[str, Any]:
+) -> Dict[str, Any]:
     response = None
     try:
-        auth = HTTPBasicAuth(config.username_or_account, config.password_or_license)
+        auth = HTTPBasicAuth(
+            config.username_or_account,
+            config.password_or_license
+        )
         headers = {
             "x-company-id": config.company_name,
             "Content-Type": "application/json",
@@ -196,20 +203,27 @@ def api_commit_transaction(
             data="{}"
         )
         if response.status_code == 401:
-            logger.exception("Avatax Excise Authentication Error - Invalid Credentials")
+            logger.exception(
+                "Avatax Excise Authentication Error - Invalid Credentials"
+            )
             return {}
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
-            logger.exception("Avatax Excise response contains errors %s", json_response)
+            logger.exception(
+                "Avatax Excise response contains errors %s", json_response
+            )
             return json_response
 
     except requests.exceptions.RequestException:
         logger.exception(f"Commit transaction failed {url}")
         return {}
     except json.JSONDecodeError:
-        content = response.content if response else "Unable to find the response"
+        content = "Unable to find the response"
+        if response:
+            content = response.content
         logger.exception(
-            "Unable to decode the response from Avatax Excise. Response: %s", content
+            "Unable to decode the response from Avatax Excise."
+            "Response: %s", content
         )
         return {}
     return json_response  # type: ignore
@@ -226,76 +240,96 @@ def append_line_to_data(
     variant_channel_listing: "ProductVariantChannelListing",
     discounted: bool = False,
 ):
-    """Abstract line data regardless of Checkout or Order."""
+    """
+    Abstract line data regardless of Checkout or Order.
+    """
+
     stock = variant.stocks.for_country_and_channel(
         shipping_address.country, variant_channel_listing.channel.slug
     ).first()
-    if stock:
-        warehouse_address = stock.warehouse.address
-    else:
-        warehouse_address = None
-    unit_price = base_calculations.base_checkout_line_unit_price(amount, quantity)
-    data.append(
-        TransactionLine(
-            InvoiceLine=line_id,
-            ProductCode=variant.sku,
-            UnitPrice=amount,
-            UnitOfMeasure=variant.product.product_type.get_value_from_private_metadata(
-                get_metadata_key("UnitOfMeasure")
-            ),
-            BilledUnits=Decimal(quantity),
-            LineAmount=amount,
-            AlternateUnitPrice=variant_channel_listing.cost_price_amount,
-            TaxIncluded=tax_included,
-            UnitQuantity=variant.get_value_from_private_metadata(
-                get_metadata_key("UnitQuantity")
-            ),
-            UnitQuantityUnitOfMeasure=variant.product.product_type.get_value_from_private_metadata(
-                get_metadata_key("UnitQuantityUnitOfMeasure")
-            ),
-            DestinationCountryCode=shipping_address.country.alpha3,
-            DestinationJurisdiction=shipping_address.country_area,
-            DestinationAddress1=shipping_address.street_address_1,
-            DestinationAddress2=shipping_address.street_address_2,
-            DestinationCity=shipping_address.city,
-            DestinationCounty=shipping_address.city_area,
-            DestinationPostalCode=shipping_address.postal_code,
-            SaleCountryCode=shipping_address.country.alpha3,
-            SaleJurisdiction=shipping_address.country_area,
-            SaleAddress1=shipping_address.street_address_1,
-            SaleAddress2=shipping_address.street_address_2,
-            SaleCity=shipping_address.city,
-            SaleCounty=shipping_address.city_area,
-            SalePostalCode=shipping_address.postal_code,
-            OriginCountryCode=warehouse_address.country.alpha3 if warehouse_address else None,
-            OriginJurisdiction=warehouse_address.country_area if warehouse_address else None,
-            OriginAddress1=warehouse_address.street_address_1 if warehouse_address else None,
-            OriginAddress2=warehouse_address.street_address_2 if warehouse_address else None,
-            OriginCity=warehouse_address.city if warehouse_address else None,
-            OriginCounty=warehouse_address.city_area if warehouse_address else None,
-            OriginPostalCode=warehouse_address.postal_code if warehouse_address else None,
-            UserData=variant.sku,
-            Discounted=discounted,
-            CustomString1=variant.get_value_from_private_metadata(
-                get_metadata_key("CustomString1")
-            ),
-            CustomString2=variant.get_value_from_private_metadata(
-                get_metadata_key("CustomString2")
-            ),
-            CustomString3=variant.get_value_from_private_metadata(
-                get_metadata_key("CustomString3")
-            ),
-            CustomNumeric1=variant.get_value_from_private_metadata(
-                get_metadata_key("CustomNumeric1")
-            ),
-            CustomNumeric2=variant.get_value_from_private_metadata(
-                get_metadata_key("CustomNumeric2")
-            ),
-            CustomNumeric3=variant.get_value_from_private_metadata(
-                get_metadata_key("CustomNumeric3")
-            ),
+    warehouse_address = stock.warehouse.address if stock else None
+
+    unit_of_measure = variant.product.product_type.\
+        get_value_from_private_metadata(get_metadata_key("UnitQuantity"))
+    unit_quantity = variant.get_value_from_private_metadata(
+        get_metadata_key("UnitQuantity"))
+    unit_quantity_of_measure = variant.product.product_type.\
+        get_value_from_private_metadata(
+            get_metadata_key("UnitQuantityUnitOfMeasure")
         )
+
+    origin_country_code = None
+    origin_jurisdiction = None
+    origin_address1 = None
+    origin_address2 = None
+    origin_city = None
+    origin_county = None
+    origin_postal_code = None
+
+    if warehouse_address:
+        origin_country_code = warehouse_address.country.alpha3
+        origin_jurisdiction = warehouse_address.country_area
+        origin_address1 = warehouse_address.street_address_1
+        origin_address2 = warehouse_address.street_address_2
+        origin_city = warehouse_address.city
+        origin_county = warehouse_address.city_area
+        origin_postal_code = warehouse_address.postal_code
+
+    transaction_line = TransactionLine(
+        InvoiceLine=line_id,
+        ProductCode=variant.sku,
+        UnitPrice=amount,
+        UnitOfMeasure=unit_of_measure,
+        BilledUnits=Decimal(quantity),
+        LineAmount=amount,
+        AlternateUnitPrice=variant_channel_listing.cost_price_amount,
+        TaxIncluded=tax_included,
+        UnitQuantity=unit_quantity,
+        UnitQuantityUnitOfMeasure=unit_quantity_of_measure,
+        DestinationCountryCode=shipping_address.country.alpha3,
+        DestinationJurisdiction=shipping_address.country_area,
+        DestinationAddress1=shipping_address.street_address_1,
+        DestinationAddress2=shipping_address.street_address_2,
+        DestinationCity=shipping_address.city,
+        DestinationCounty=shipping_address.city_area,
+        DestinationPostalCode=shipping_address.postal_code,
+        SaleCountryCode=shipping_address.country.alpha3,
+        SaleJurisdiction=shipping_address.country_area,
+        SaleAddress1=shipping_address.street_address_1,
+        SaleAddress2=shipping_address.street_address_2,
+        SaleCity=shipping_address.city,
+        SaleCounty=shipping_address.city_area,
+        SalePostalCode=shipping_address.postal_code,
+        OriginCountryCode=origin_country_code,
+        OriginJurisdiction=origin_jurisdiction,
+        OriginAddress1=origin_address1,
+        OriginAddress2=origin_address2,
+        OriginCity=origin_city,
+        OriginCounty=origin_county,
+        OriginPostalCode=origin_postal_code,
+        UserData=variant.sku,
+        Discounted=discounted,
+        CustomString1=variant.get_value_from_private_metadata(
+            get_metadata_key("CustomString1")
+        ),
+        CustomString2=variant.get_value_from_private_metadata(
+            get_metadata_key("CustomString2")
+        ),
+        CustomString3=variant.get_value_from_private_metadata(
+            get_metadata_key("CustomString3")
+        ),
+        CustomNumeric1=variant.get_value_from_private_metadata(
+            get_metadata_key("CustomNumeric1")
+        ),
+        CustomNumeric2=variant.get_value_from_private_metadata(
+            get_metadata_key("CustomNumeric2")
+        ),
+        CustomNumeric3=variant.get_value_from_private_metadata(
+            get_metadata_key("CustomNumeric3")
+        ),
     )
+
+    data.append(transaction_line)
 
 
 def append_shipping_to_data(
@@ -348,7 +382,7 @@ def generate_request_data(
     discount: Optional[Decimal] = Decimal("0.00"),
 ):
 
-    today_date = str(date.today())  # Does not seem timezone safe
+    today_date = str(timezone.now().date())
     data = TransactionCreateRequestData(
         EffectiveDate=today_date,
         InvoiceDate=today_date,
@@ -421,7 +455,6 @@ def generate_request_data_from_checkout(
         discounts=None,
         discounted=discounted,
     )
-    channel = checkout_info.channel
 
     data = generate_request_data(
         transaction_type,
@@ -433,7 +466,9 @@ def generate_request_data_from_checkout(
     return data
 
 
-def get_order_lines_data(order: "Order", discounted:bool=False, discounts=None) -> List[TransactionLine]:
+def get_order_lines_data(
+    order: "Order", discounted: bool = False, discounts=None
+) -> List[TransactionLine]:
 
     data: List[TransactionLine] = []
     order_lines = order.lines.all()
@@ -448,9 +483,8 @@ def get_order_lines_data(order: "Order", discounted:bool=False, discounts=None) 
         if variant is None:
             continue
 
-        channel_id = order.channel.id
         variant_channel_listing = line.variant.channel_listings.get(
-            channel_id=order.channel.id
+            channel_id=order.channel_id
         )
 
         append_line_to_data(
@@ -514,9 +548,10 @@ def get_cached_response_or_fetch(
     config: AvataxConfiguration,
     force_refresh: bool = False,
 ):
-    """Try to find response in cache.
-
-    Return cached response if requests data are the same. Fetch new data in other cases.
+    """
+    Try to find response in cache.
+    Return cached response if requests data are the same.
+    Fetch new data in other cases.
     """
     data_cache_key = CACHE_KEY + token_in_cache
     if taxes_need_new_fetch(data, token_in_cache) or force_refresh:
@@ -536,7 +571,9 @@ def get_checkout_tax_data(
     data = generate_request_data_from_checkout(
         checkout_info, lines_info, config, discounts=discounts
     )
-    return get_cached_response_or_fetch(data, str(checkout_info.checkout.token), config)
+    return get_cached_response_or_fetch(
+        data, str(checkout_info.checkout.token), config
+    )
 
 
 def get_order_request_data(order: "Order", config=AvataxConfiguration):
@@ -593,10 +630,11 @@ def metadata_requires_update(
     token_in_cache: str,
     force_refresh: bool = False,
 ):
-    """Check if Checkout metadata needs to be reset.
-
-    The itemized taxes from ATE are stored in a cache. If an object doesn't exist in cache
-    or something has changed, taxes need to be refetched.
+    """
+    Check if Checkout metadata needs to be reset.
+    The itemized taxes from ATE are stored in a cache.
+    If an object doesn't exist in cache or something has changed,
+    taxes need to be refetched.
     """
     if force_refresh:
         return True
@@ -618,12 +656,13 @@ def process_checkout_metadata(
     force_refresh: bool = False,
     cache_time: int = CACHE_TIME,
 ):
-    """Check for Checkout metadata in cache.
-
+    """
+    Check for Checkout metadata in cache.
     Do nothing if metadata are the same. Set new metadata in other cases.
     """
     checkout_token = checkout.token
-    data_cache_key = get_metadata_key("checkout_metadata_") + str(checkout_token)
+    metadata_key = get_metadata_key("checkout_metadata_")
+    data_cache_key = f"{metadata_key}{checkout_token}"
     tax_item = {get_metadata_key("itemized_taxes"): metadata}
 
     if metadata_requires_update(tax_item, data_cache_key) or force_refresh:

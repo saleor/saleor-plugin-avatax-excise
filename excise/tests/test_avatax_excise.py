@@ -1,5 +1,5 @@
+import json
 from decimal import Decimal
-from json import JSONDecodeError
 from unittest.mock import Mock, patch
 from urllib.parse import urljoin
 
@@ -13,25 +13,22 @@ from requests import RequestException
 from dataclasses import asdict
 from saleor.account.models import Address
 
-from saleor.checkout.models import CheckoutLine, Checkout
+from saleor.checkout.models import CheckoutLine
 from saleor.checkout.utils import add_variant_to_checkout
-from saleor.checkout.fetch import fetch_checkout_lines
+from saleor.checkout.fetch import fetch_checkout_info, fetch_checkout_lines
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import TaxError
 from saleor.product.models import ProductType, ProductVariant
 from saleor.warehouse.models import Warehouse
 from saleor.plugins.manager import get_plugins_manager
 from saleor.plugins.models import PluginConfiguration
-from saleor.plugins.avatax import AvataxConfiguration
 from ..utils import (
     AvataxConfiguration,
     api_post_request,
     get_metadata_key,
-    get_api_url,
     get_order_request_data,
 )
 from ..plugin import AvataxExcisePlugin
-from saleor.checkout.fetch import fetch_checkout_info, fetch_checkout_lines
 
 
 @pytest.fixture
@@ -137,7 +134,9 @@ def test_save_plugin_configuration(api_get_request_mock, settings, channel_USD):
 
 
 def test_save_plugin_configuration_invalid(settings, channel_USD):
-    settings.PLUGINS = ["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+    settings.PLUGINS = [
+        "saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"
+    ]
     manager = get_plugins_manager()
     with pytest.raises(ValidationError):
         manager.save_plugin_configuration(
@@ -161,7 +160,9 @@ def test_save_plugin_configuration_invalid(settings, channel_USD):
 def test_save_plugin_configuration_authentication_failed(
     api_get_request_mock, settings, channel_USD
 ):
-    settings.PLUGINS = ["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+    settings.PLUGINS = [
+        "saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"
+    ]
     api_get_request_mock.return_value = {"authenticated": False}
     manager = get_plugins_manager()
 
@@ -177,7 +178,8 @@ def test_save_plugin_configuration_authentication_failed(
                 ],
             },
         )
-    assert e._excinfo[1].args[0] == "Authentication failed. Please check provided data."
+    msg = "Authentication failed. Please check provided data."
+    assert e._excinfo[1].args[0] == msg
     plugin_configuration = PluginConfiguration.objects.get(
         identifier=AvataxExcisePlugin.PLUGIN_ID
     )
@@ -191,7 +193,9 @@ def test_save_plugin_configuration_authentication_failed(
         (True, "15.00", "15.00", True),
     ],
 )
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_calculate_checkout_line_total(
     reset_sequences,  # pylint: disable=unused-argument
     with_discount,
@@ -227,7 +231,9 @@ def test_calculate_checkout_line_total(
     checkout_with_item.discount_amount = discount_amount
 
     lines = fetch_checkout_lines(checkout_with_item)
-    checkout_info = fetch_checkout_info(checkout_with_item, lines, discounts, manager)
+    checkout_info = fetch_checkout_info(
+        checkout_with_item, lines, discounts, manager
+    )
     checkout_line_info = lines[0]
 
     total = manager.calculate_checkout_line_total(
@@ -250,7 +256,9 @@ def test_calculate_checkout_line_total(
         (False, "30.00", "32.29", True),
     ],
 )
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_calculate_checkout_line_total_metadata(
     reset_sequences,  # pylint: disable=unused-argument
     with_discount,
@@ -282,7 +290,9 @@ def test_calculate_checkout_line_total_metadata(
     discounts = [discount_info] if with_discount else None
 
     lines = fetch_checkout_lines(checkout_with_item)
-    checkout_info = fetch_checkout_info(checkout_with_item, lines, discounts, manager)
+    checkout_info = fetch_checkout_info(
+        checkout_with_item, lines, discounts, manager
+    )
     checkout_line_info = lines[0]
 
     manager.calculate_checkout_line_total(
@@ -293,21 +303,106 @@ def test_calculate_checkout_line_total_metadata(
         discounts,
     )
 
-    checkout = Checkout.objects.filter(token=line.checkout.token).first()
+    checkout_with_item.refresh_from_db()
+
+    target_data = [
+        {
+            "TransactionTaxAmounts": [],
+            "SequenceId":1,
+            "TransactionLine":1,
+            "InvoiceLine":1,
+            "CountryCode":"USA",
+            "Jurisdiction":"TX",
+            "LocalJurisdiction":"48",
+            "ProductCategory":0.0,
+            "TaxingLevel":"STA",
+            "TaxType":"S",
+            "RateType":"G",
+            "RateSubtype":"NONE",
+            "CalculationTypeInd":"P",
+            "TaxRate":0.0625,
+            "TaxQuantity":0.0,
+            "TaxAmount":1.73,
+            "TaxExemptionInd":"N",
+            "SalesTaxBaseAmount":27.71,
+            "LicenseNumber":"",
+            "RateDescription":"TX STATE TAX - TEXAS",
+            "Currency":"USD",
+            "SubtotalInd":"C",
+            "StatusCode":"ACTIVE",
+            "QuantityInd":"B"
+        },
+        {
+            "TransactionTaxAmounts": [],
+            "SequenceId":2,
+            "TransactionLine":1,
+            "InvoiceLine":1,
+            "CountryCode":"USA",
+            "Jurisdiction":"TX",
+            "LocalJurisdiction":"05000",
+            "ProductCategory":0.0,
+            "TaxingLevel":"CIT",
+            "TaxType":"S",
+            "RateType":"G",
+            "RateSubtype":"NONE",
+            "CalculationTypeInd":"P",
+            "TaxRate":0.01,
+            "TaxQuantity":0.0,
+            "TaxAmount":0.28,
+            "TaxExemptionInd":"N",
+            "SalesTaxBaseAmount":27.71,
+            "LicenseNumber":"",
+            "RateDescription":"TX CITY TAX - AUSTIN",
+            "Currency":"USD",
+            "SubtotalInd":"C",
+            "StatusCode":"ACTIVE",
+            "QuantityInd":"B"
+        },
+        {
+            "TransactionTaxAmounts": [],
+            "SequenceId":3,
+            "TransactionLine":1,
+            "InvoiceLine":1,
+            "CountryCode":"USA",
+            "Jurisdiction":"TX",
+            "LocalJurisdiction":"6000814",
+            "ProductCategory":0.0,
+            "TaxingLevel":"STJ",
+            "TaxType":"S",
+            "RateType":"G",
+            "RateSubtype":"NONE",
+            "CalculationTypeInd":"P",
+            "TaxRate":0.01,
+            "TaxQuantity":0.0,
+            "TaxAmount":0.28,
+            "TaxExemptionInd":"N",
+            "SalesTaxBaseAmount":27.71,
+            "LicenseNumber":"",
+            "RateDescription":"TX SPECIAL TAX - AUSTIN MTA TRANSIT",
+            "Currency":"USD",
+            "SubtotalInd":"C",
+            "StatusCode":"ACTIVE",
+            "QuantityInd":"B"
+        }
+    ]
+
     assert (
-        checkout.metadata[get_metadata_key("itemized_taxes")]
-        == '[{"TransactionTaxAmounts": [], "SequenceId": 1, "TransactionLine": 1, "InvoiceLine": 1, "CountryCode": "USA", "Jurisdiction": "TX", "LocalJurisdiction": "48", "ProductCategory": 0.0, "TaxingLevel": "STA", "TaxType": "S", "RateType": "G", "RateSubtype": "NONE", "CalculationTypeInd": "P", "TaxRate": 0.0625, "TaxQuantity": 0.0, "TaxAmount": 1.73, "TaxExemptionInd": "N", "SalesTaxBaseAmount": 27.71, "LicenseNumber": "", "RateDescription": "TX STATE TAX - TEXAS", "Currency": "USD", "SubtotalInd": "C", "StatusCode": "ACTIVE", "QuantityInd": "B"}, {"TransactionTaxAmounts": [], "SequenceId": 2, "TransactionLine": 1, "InvoiceLine": 1, "CountryCode": "USA", "Jurisdiction": "TX", "LocalJurisdiction": "05000", "ProductCategory": 0.0, "TaxingLevel": "CIT", "TaxType": "S", "RateType": "G", "RateSubtype": "NONE", "CalculationTypeInd": "P", "TaxRate": 0.01, "TaxQuantity": 0.0, "TaxAmount": 0.28, "TaxExemptionInd": "N", "SalesTaxBaseAmount": 27.71, "LicenseNumber": "", "RateDescription": "TX CITY TAX - AUSTIN", "Currency": "USD", "SubtotalInd": "C", "StatusCode": "ACTIVE", "QuantityInd": "B"}, {"TransactionTaxAmounts": [], "SequenceId": 3, "TransactionLine": 1, "InvoiceLine": 1, "CountryCode": "USA", "Jurisdiction": "TX", "LocalJurisdiction": "6000814", "ProductCategory": 0.0, "TaxingLevel": "STJ", "TaxType": "S", "RateType": "G", "RateSubtype": "NONE", "CalculationTypeInd": "P", "TaxRate": 0.01, "TaxQuantity": 0.0, "TaxAmount": 0.28, "TaxExemptionInd": "N", "SalesTaxBaseAmount": 27.71, "LicenseNumber": "", "RateDescription": "TX SPECIAL TAX - AUSTIN MTA TRANSIT", "Currency": "USD", "SubtotalInd": "C", "StatusCode": "ACTIVE", "QuantityInd": "B"}]'
+        checkout_with_item.metadata[get_metadata_key("itemized_taxes")]
+        == json.dumps(target_data)
     )
 
 
 @pytest.mark.vcr
 @pytest.mark.parametrize(
-    "with_discount, expected_net, expected_gross, voucher_amount, taxes_in_prices",
+    "with_discount, expected_net, expected_gross, "
+    "voucher_amount, taxes_in_prices",
     [
         (False, "43.98", "48.95", "0.0", False),
     ],
 )
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_calculate_checkout_total(
     reset_sequences,  # pylint: disable=unused-argument
     with_discount,
@@ -356,9 +451,13 @@ def test_calculate_checkout_total(
     discounts = [discount_info] if with_discount else None
     discount_amount = Decimal("1.00") if with_discount else Decimal("0.00")
     checkout_with_item.discount_amount = discount_amount
-    checkout_info = fetch_checkout_info(checkout_with_item, [], discounts, manager)
+    checkout_info = fetch_checkout_info(
+        checkout_with_item, [], discounts, manager
+    )
 
-    add_variant_to_checkout(checkout_info, product_with_single_variant.variants.get())
+    add_variant_to_checkout(
+        checkout_info, product_with_single_variant.variants.get()
+    )
 
     lines = fetch_checkout_lines(checkout_with_item)
     total = manager.calculate_checkout_total(
@@ -371,7 +470,9 @@ def test_calculate_checkout_total(
 
 
 @pytest.mark.vcr
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_calculate_checkout_shipping(
     reset_sequences,  # pylint: disable=unused-argument
     checkout_with_item,
@@ -404,7 +505,9 @@ def test_calculate_checkout_shipping(
 
 
 @patch("saleor.plugins.avatax.plugin.AvataxPlugin._skip_plugin")
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_calculate_checkout_total_skip(
     skip_mock, checkout_with_item, address_usa, plugin_configuration
 ):
@@ -416,7 +519,9 @@ def test_calculate_checkout_total_skip(
     skip_mock.assert_called_once
 
 
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_calculate_checkout_total_invalid_checkout(
     checkout_with_item, address_usa, plugin_configuration
 ):
@@ -424,13 +529,16 @@ def test_calculate_checkout_total_invalid_checkout(
     manager = get_plugins_manager()
     checkout_info = fetch_checkout_info(checkout_with_item, [], [], manager)
     total = manager.calculate_checkout_total(checkout_info, [], [], [])
-    assert total == TaxedMoney(net=Money("0.00", "USD"), gross=Money("0.00", "USD"))
+    assert total == TaxedMoney(
+        net=Money("0.00", "USD"),
+        gross=Money("0.00", "USD")
+    )
 
 
 @pytest.mark.vcr
 @pytest.mark.parametrize(
-    "expected_net, expected_gross, taxes_in_prices, variant_sku, price, destination, "
-    "metadata",
+    "expected_net, expected_gross, taxes_in_prices, "
+    "variant_sku, price, destination, metadata",
     [
         (
             "20",
@@ -462,7 +570,9 @@ def test_calculate_checkout_total_invalid_checkout(
         ),
     ],
 )
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_calculate_checkout_total_excise_data(
     reset_sequences,  # pylint: disable=unused-argument
     expected_net,
@@ -524,7 +634,9 @@ def test_calculate_checkout_total_excise_data(
     site_settings.save()
 
     lines = fetch_checkout_lines(checkout)
-    total = manager.calculate_checkout_total(checkout_info, lines, address_usa, [])
+    total = manager.calculate_checkout_total(
+        checkout_info, lines, address_usa, []
+    )
     total = quantize_price(total, total.currency)
     assert total == TaxedMoney(
         net=Money(expected_net, "USD"), gross=Money(expected_gross, "USD")
@@ -532,7 +644,9 @@ def test_calculate_checkout_total_excise_data(
 
 
 @pytest.mark.vcr
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_preprocess_order_creation(
     checkout_with_item,
     address,
@@ -552,12 +666,16 @@ def test_preprocess_order_creation(
     checkout_with_item.save()
     discounts = [discount_info]
     lines = fetch_checkout_lines(checkout_with_item)
-    checkout_info = fetch_checkout_info(checkout_with_item, lines, discounts, manager)
+    checkout_info = fetch_checkout_info(
+        checkout_with_item, lines, discounts, manager
+    )
     manager.preprocess_order_creation(checkout_info, discounts, lines)
 
 
 @pytest.mark.vcr
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_preprocess_order_creation_wrong_data(
     checkout_with_item,
     address,
@@ -572,7 +690,9 @@ def test_preprocess_order_creation_wrong_data(
     checkout_with_item.shipping_method = shipping_zone.shipping_methods.get()
     checkout_with_item.save()
     discounts = []
-    checkout_info = fetch_checkout_info(checkout_with_item, [], discounts, manager)
+    checkout_info = fetch_checkout_info(
+        checkout_with_item, [], discounts, manager
+    )
     lines = fetch_checkout_lines(checkout_with_item)
 
     with pytest.raises(TaxError) as e:
@@ -601,13 +721,15 @@ def test_api_post_request_handles_request_errors(product, monkeypatch):
 
 
 def test_api_post_request_handles_json_errors(product, monkeypatch):
-    mocked_response = Mock(side_effect=JSONDecodeError("", "", 0))
+    mocked_response = Mock(side_effect=json.JSONDecodeError("", "", 0))
     monkeypatch.setattr(
         "saleor.plugins.avatax.excise.utils.requests.post", mocked_response
     )
 
     config = AvataxConfiguration(
-        username_or_account="test", password_or_license="test", use_sandbox=False
+        username_or_account="test",
+        password_or_license="test",
+        use_sandbox=False
     )
     url = "https://www.avatax.api.com/some-get-path"
 
@@ -618,7 +740,9 @@ def test_api_post_request_handles_json_errors(product, monkeypatch):
 
 
 @pytest.mark.vcr
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 @patch("saleor.plugins.avatax.excise.plugin.api_post_request_task.delay")
 def test_order_created_calls_task(
     api_post_request_task_mock,
@@ -671,7 +795,9 @@ def test_order_created_calls_task(
 
 
 @pytest.mark.vcr
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_order_created(
     order_with_lines,
     product,
