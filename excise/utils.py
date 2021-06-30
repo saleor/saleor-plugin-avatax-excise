@@ -625,10 +625,9 @@ def process_checkout_metadata(
     data_cache_key = f"{metadata_key}{checkout_token}"
     tax_item = {get_metadata_key("itemized_taxes"): metadata}
 
+    # Refresh checkout metadata
     if metadata_requires_update(tax_item, data_cache_key) or force_refresh:
-
-        checkout_obj = Checkout.objects.filter(token=checkout_token).first()
-        if checkout_obj:
-            checkout_obj.store_value_in_metadata(items=tax_item)
-            checkout_obj.save()
-            cache.set(data_cache_key, tax_item, cache_time)
+        checkout.refresh_from_db()
+        checkout.store_value_in_metadata(items=tax_item)
+        checkout.save()
+        cache.set(data_cache_key, tax_item, cache_time)
