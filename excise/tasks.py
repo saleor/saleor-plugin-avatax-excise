@@ -11,7 +11,6 @@ from saleor.order.models import Order
 from .utils import (
     AvataxConfiguration,
     api_post_request,
-    api_commit_transaction,
     get_metadata_key,
 )
 
@@ -30,10 +29,10 @@ def api_post_request_task(
     order = Order.objects.filter(id=order_id).first()
     if not order:
         msg = (
-            f"Unable to send the order {order_id} to Avatax Excise. "
+            "Unable to send the order %s to Avatax Excise. "
             "Order doesn't exist."
         )
-        logger.error(msg)
+        logger.error(msg, order_id)
         return
     if not data.get("TransactionLines"):
         msg = (
@@ -69,9 +68,10 @@ def api_post_request_task(
         user_tran_id = response.get('UserTranId')
         if config.autocommit and commit_url and user_tran_id:
             commit_url = commit_url.format(user_tran_id)
-            response = api_commit_transaction(
+            response = api_post_request(
                 commit_url,
-                config
+                {},
+                config,
             )
             errors = response.get("TransactionErrors", [])
             avatax_msg = ""

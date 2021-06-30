@@ -153,7 +153,7 @@ def api_post_request(
             auth=auth,
             data=formatted_data,
         )
-        logger.debug("Hit to Avatax Excise to calculate taxes %s", url)
+        logger.debug("Hit to Avatax Excise API with URL: %s", url)
         if response.status_code == 401:
             logger.exception(
                 "Avatax Excise Authentication Error - Invalid Credentials"
@@ -168,7 +168,7 @@ def api_post_request(
             return json_response
 
     except requests.exceptions.RequestException:
-        logger.exception("Fetching taxes failed %s", url)
+        logger.exception("Excise API request failed for URL: %s", url)
         return {}
     except json.JSONDecodeError:
         content = "Unable to find the response"
@@ -176,53 +176,6 @@ def api_post_request(
             content = response.content
         logger.exception(
             "Unable to decode the response from Avatax Excise. "
-            "Response: %s", content
-        )
-        return {}
-    return json_response  # type: ignore
-
-
-def api_commit_transaction(
-    url: str, config: AvataxConfiguration
-) -> Dict[str, Any]:
-    response = None
-    try:
-        auth = HTTPBasicAuth(
-            config.username_or_account,
-            config.password_or_license
-        )
-        headers = {
-            "x-company-id": config.company_name,
-            "Content-Type": "application/json",
-        }
-
-        response = requests.post(
-            url,
-            headers=headers,
-            auth=auth,
-            data="{}"
-        )
-        if response.status_code == 401:
-            logger.exception(
-                "Avatax Excise Authentication Error - Invalid Credentials"
-            )
-            return {}
-        json_response = response.json()
-        if json_response.get("Status") == "Errors found":
-            logger.exception(
-                "Avatax Excise response contains errors %s", json_response
-            )
-            return json_response
-
-    except requests.exceptions.RequestException:
-        logger.exception(f"Commit transaction failed {url}")
-        return {}
-    except json.JSONDecodeError:
-        content = "Unable to find the response"
-        if response:
-            content = response.content
-        logger.exception(
-            "Unable to decode the response from Avatax Excise."
             "Response: %s", content
         )
         return {}
@@ -420,7 +373,7 @@ def get_checkout_lines_data(
             quantity=line_info.line.quantity,
             shipping_address=shipping_address,
             tax_included=tax_included,
-            variant=line_info.line.variant,
+            variant=line_info.variant,
             variant_channel_listing=line_info.channel_listing,
             discounted=discounted,
         )
@@ -538,7 +491,7 @@ def commit_transaction(
         span = scope.span
         span.set_tag(opentracing.tags.COMPONENT, "tax")
         span.set_tag("service.name", "avatax_excise")
-        response = api_commit_transaction(commit_url, config)
+        response = api_post_request(commit_url, {}, config)
     return response
 
 
