@@ -374,8 +374,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not tax_lines:
             return previous_value
 
-        tax_meta = json.dumps(tax_lines)
-        process_checkout_metadata(tax_meta, checkout)
+        process_checkout_metadata(json.dumps(tax_lines), checkout)
 
         currency = checkout.currency
         net = Decimal(previous_value.net.amount)

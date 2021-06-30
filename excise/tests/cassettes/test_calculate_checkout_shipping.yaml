@@ -1,31 +1,33 @@
 interactions:
 - request:
-    body: '{"EffectiveDate": "2021-05-18", "InvoiceDate": "2021-05-18", "TitleTransferCode":
+    body: '{"EffectiveDate": "2021-06-30", "InvoiceDate": "2021-06-30", "TitleTransferCode":
       "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
-      "ProductCode": "123", "UnitPrice": "15.00", "UnitOfMeasure": null, "BilledUnits":
-      "3", "LineAmount": "15.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
+      "ProductCode": "123", "UnitPrice": "30.00", "UnitOfMeasure": null, "BilledUnits":
+      "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
       "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
-      "USA", "DestinationJurisdiction": "TX", "DestinationAddress1": "1100 Congress
+      "USA", "DestinationJurisdiction": "VA", "DestinationAddress1": "1100 Congress
       Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
-      "Austin", "DestinationPostalCode": "78701", "SaleCountryCode": "USA", "SaleAddress1":
-      "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "TX", "SaleCounty":
-      "", "SaleCity": "Austin", "SalePostalCode": "78701", "OriginCountryCode": "USA",
-      "OriginJurisdiction": "TX", "OriginCounty": "", "OriginCity": "Austin", "OriginPostalCode":
-      "78701", "OriginAddress1": "1100 Congress Ave", "OriginAddress2": "", "UserData":
-      "123", "CustomString1": null, "CustomString2": null, "CustomString3": null,
-      "CustomNumeric1": null, "CustomNumeric2": null, "CustomNumeric3": null}, {"InvoiceLine":
-      null, "ProductCode": "TAXFREIGHT", "UnitPrice": null, "UnitOfMeasure": "EA",
-      "BilledUnits": null, "LineAmount": "10.000", "AlternateUnitPrice": null, "TaxIncluded":
-      false, "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
-      "USA", "DestinationJurisdiction": "TX", "DestinationAddress1": "1100 Congress
-      Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
-      "Austin", "DestinationPostalCode": "78701", "SaleCountryCode": "USA", "SaleAddress1":
-      "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "TX", "SaleCounty":
-      "", "SaleCity": "Austin", "SalePostalCode": "78701", "OriginCountryCode": null,
-      "OriginJurisdiction": null, "OriginCounty": null, "OriginCity": null, "OriginPostalCode":
-      null, "OriginAddress1": null, "OriginAddress2": null, "UserData": "Shipping",
-      "CustomString1": null, "CustomString2": null, "CustomString3": null, "CustomNumeric1":
-      null, "CustomNumeric2": null, "CustomNumeric3": null}], "InvoiceNumber": null}'
+      "Richmond", "DestinationPostalCode": "23226", "SaleCountryCode": "USA", "SaleAddress1":
+      "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "VA", "SaleCounty":
+      "", "SaleCity": "Richmond", "SalePostalCode": "23226", "Discounted": false,
+      "OriginCountryCode": "USA", "OriginJurisdiction": "VA", "OriginCounty": "",
+      "OriginCity": "Richmond", "OriginPostalCode": "23226", "OriginAddress1": "1100
+      Congress Ave", "OriginAddress2": "", "UserData": "123", "CustomString1": null,
+      "CustomString2": null, "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2":
+      null, "CustomNumeric3": null}, {"InvoiceLine": null, "ProductCode": "TAXFREIGHT",
+      "UnitPrice": null, "UnitOfMeasure": "EA", "BilledUnits": null, "LineAmount":
+      "10.000", "AlternateUnitPrice": null, "TaxIncluded": false, "UnitQuantity":
+      null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode": "USA", "DestinationJurisdiction":
+      "VA", "DestinationAddress1": "1100 Congress Ave", "DestinationAddress2": "",
+      "DestinationCounty": "", "DestinationCity": "Richmond", "DestinationPostalCode":
+      "23226", "SaleCountryCode": "USA", "SaleAddress1": "1100 Congress Ave", "SaleAddress2":
+      "", "SaleJurisdiction": "VA", "SaleCounty": "", "SaleCity": "Richmond", "SalePostalCode":
+      "23226", "Discounted": false, "OriginCountryCode": null, "OriginJurisdiction":
+      null, "OriginCounty": null, "OriginCity": null, "OriginPostalCode": null, "OriginAddress1":
+      null, "OriginAddress2": null, "UserData": "Shipping", "CustomString1": null,
+      "CustomString2": null, "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2":
+      null, "CustomNumeric3": null}], "InvoiceNumber": null, "Discount": "0", "UserTranId":
+      null}'
     headers:
       Accept:
       - '*/*'
@@ -36,7 +38,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '2136'
+      - '2225'
       Content-Type:
       - application/json
       User-Agent:
@@ -47,20 +49,38 @@ interactions:
     uri: https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create
   response:
     body:
-      string: "{\r\n  \"UserTranId\": \"fc37e563-7114-4564-96c0-87c9b2f65992\",\r\n
-        \ \"TranId\": 40722210,\r\n  \"Status\": \"Success\",\r\n  \"ReturnCode\":
-        0,\r\n  \"TotalTaxAmount\": 0.0,\r\n  \"TransactionTaxes\": [],\r\n  \"TransactionErrors\":
-        [\r\n    {\r\n      \"SequenceId\": 1,\r\n      \"ErrorCode\": \"-895\",\r\n
-        \     \"ErrorMessage\": \"Populating Origin information using Destination
-        information for transaction line 2.\",\r\n      \"ErrorLevelInd\": \"Warning\",\r\n
-        \     \"TransactionLine\": 2\r\n    }\r\n  ],\r\n  \"UserReturnValue\": \"\"\r\n}"
+      string: !!binary |
+        H4sIAAAAAAAEAO1ZXW+jOBR9H2n+A+K5ifhok+y8UUJTZtMkG2h3V6t5cMFJLRHIGogaVf3vY5uP
+        2JiQbPehXW2lSql8jq+vj499Dbx8/aIo6n0KsY9B7IbqN0XVYXAZBAboDR6h2bscDMPeSIewN7zS
+        wHD0qJnBQFcvWMe606U+0IfG1aho9jKQ5SmN5eVBANO0pC9hluPYTkJIMK0MkWQg8sGztUnyOCPt
+        en+oHaKnIMhQEhMCpAH/ooCivBQ/EqcIwog/LmqOB//OYRxAlql+0dZ3imIogm68S1AAZcCmQ+B9
+        OQv13rPUA/g9xygNEYtJ0QcenCYBiJqMK51jLHAS5kFmgwyuE7ynKvU1LmHwjOL1FO5gxMT1+egE
+        9PdblpPHNS9JrKp90mj38seshGbzmcOhNoiCPAJMVsJwY+aMhTgcDVGkeGlqmpjnbzmIM5S1TYFb
+        acMQEOcZbrZ0zHK8GTeeByKYEs41SGEdwRj1xZGnZMniFM7yzSPENERjxmOYBhhtD8ujEBF9R/Gt
+        P5Se8uAuJ+7M5VW1c4yJd/bFUo/5hIh41LtlrjYPMf9XDrFs333gxa20KXteqwXyevGvzW18MHMP
+        hmR13uxv2/U/iL917S3+1vrG6N39TUT8s7T30rVv7+az8X/W3uYHs/d84i3ebm/P//5B7K0N32hv
+        7d3t7S0c27WmDYcr9pwg7+Rz+vNDusE4GCe49Qpz7HrCelSj90a/XKkN7I7crMCawYtky9Y7Xitz
+        jNYoVlC8SvCGWUDJUwoQ8QihaOFR8p+SHRJVIrJtFKPfHI35tpzr7wDHJKTatR+NTjkIoVSg2ZXT
+        iFPpxJbv2PQEukZRNF9NQUhybvMWt3VLuW13Yi0FghVlEBP1YIOpG6bAu45gHPpJgyVQ7mOULTDJ
+        lR5pdPs1c4UhpVAhzL7W7Dlf3UGQ5rhYd+tXKTS3dw0aXZNCVAwpnGPfCuGomPVulVK9wRCtn7Lq
+        eBJ6Ht1wBCsc2nUW16SuM1mMtJdSKMFCCXWJgqdNQuwrUxZJSg6AKhHDNIxBC6t1mgVkhSEme1Fn
+        fiB3BcVO4jVtUawdPM43joVDeJvgdu9wm/iEgBzzhIrNmLKUPKNLT453SlSO2qosh58vr9xJ1pjn
+        dAhNC9YJhSnlhLR1FFlTBnWJSQmnVKScVvkocL5uHFsWjIEdSrH5QdwQq43SFOtoGFmtCkXHMVGr
+        Nkb7SVVgvFgduCxPhXcoRN+vjEEG2urFGKUBjcBdq7QKfq2JL9Ih4W1hgMQraePuLHr9LH5LFT9e
+        YqWy9c9KLLmx3Swdd3LrC6wz62dn2aprtcwUt6dQ33RWLD8L3GdF+qxInxXp/1ORvCe03QpPc6fK
+        UvFPVTkOXwGqw5NksNmCeF880ZrmsGonpzr9HFA+RdaHpuqsVpCswQ6Oi3cSqqEZek8b9EzN17Rv
+        7K8ml1XoHOpNDiMy1aYEqo8y4lJa7FawfsQeO56v8nOq3k2VazR2l47dYFCB2ca9I0HkYcpvG+yZ
+        tv6uIQBHykjBWEIanyxNFePwLkZYQZVvfMuHnLJr8X0Ghg8gysWZeEmOA+jt0wxuBICs9AZl3Acf
+        sIP1oaFaO0Dfa8lastdB5UKKc66Md7BccQviEjyk9/XL60/OB7S5whoAAA==
     headers:
       Cache-Control:
-      - private
+      - no-store, no-cache
       Connection:
       - keep-alive
+      Content-Encoding:
+      - gzip
       Content-Length:
-      - '477'
+      - '1240'
       Content-Security-Policy:
       - 'default-src ''self''; font-src ''self'' use.typekit.net fonts.gstatic.com
         data: ; img-src ''self'' p.typekit.net *.walkme.com *.cloudfront.net data:
@@ -71,7 +91,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Tue, 18 May 2021 18:05:54 GMT
+      - Wed, 30 Jun 2021 17:03:32 GMT
       Feature-Policy:
       - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
         'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
@@ -80,8 +100,6 @@ interactions:
       - strict-origin-when-cross-origin
       Server:
       - ''
-      Set-Cookie:
-      - ASP.NET_SessionId=5gmpcq0ogjct2vymiimcv5zt; path=/; HttpOnly; SameSite=Lax
       X-Content-Type-Options:
       - nosniff
       X-Frame-Options:

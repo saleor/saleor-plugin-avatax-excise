@@ -1,7 +1,7 @@
 interactions:
 - request:
     body: '{"EffectiveDate": "2021-06-30", "InvoiceDate": "2021-06-30", "TitleTransferCode":
-      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 2,
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
       "ProductCode": "123", "UnitPrice": "30.00", "UnitOfMeasure": null, "BilledUnits":
       "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
       "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
@@ -9,25 +9,24 @@ interactions:
       Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
       "Richmond", "DestinationPostalCode": "23226", "SaleCountryCode": "USA", "SaleAddress1":
       "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "VA", "SaleCounty":
+      "", "SaleCity": "Richmond", "SalePostalCode": "23226", "Discounted": true, "OriginCountryCode":
+      "USA", "OriginJurisdiction": "VA", "OriginCounty": "", "OriginCity": "Richmond",
+      "OriginPostalCode": "23226", "OriginAddress1": "1100 Congress Ave", "OriginAddress2":
+      "", "UserData": "123", "CustomString1": null, "CustomString2": null, "CustomString3":
+      null, "CustomNumeric1": null, "CustomNumeric2": null, "CustomNumeric3": null},
+      {"InvoiceLine": null, "ProductCode": "TAXFREIGHT", "UnitPrice": null, "UnitOfMeasure":
+      "EA", "BilledUnits": null, "LineAmount": "10.000", "AlternateUnitPrice": null,
+      "TaxIncluded": false, "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null,
+      "DestinationCountryCode": "USA", "DestinationJurisdiction": "VA", "DestinationAddress1":
+      "1100 Congress Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
+      "Richmond", "DestinationPostalCode": "23226", "SaleCountryCode": "USA", "SaleAddress1":
+      "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "VA", "SaleCounty":
       "", "SaleCity": "Richmond", "SalePostalCode": "23226", "Discounted": false,
-      "OriginCountryCode": "USA", "OriginJurisdiction": "VA", "OriginCounty": "",
-      "OriginCity": "Richmond", "OriginPostalCode": "23226", "OriginAddress1": "1100
-      Congress Ave", "OriginAddress2": "", "UserData": "123", "CustomString1": null,
-      "CustomString2": null, "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2":
-      null, "CustomNumeric3": null}, {"InvoiceLine": null, "ProductCode": "TAXFREIGHT",
-      "UnitPrice": null, "UnitOfMeasure": "EA", "BilledUnits": null, "LineAmount":
-      "10.000", "AlternateUnitPrice": null, "TaxIncluded": false, "UnitQuantity":
-      null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode": "USA", "DestinationJurisdiction":
-      "VA", "DestinationAddress1": "1100 Congress Ave", "DestinationAddress2": "",
-      "DestinationCounty": "", "DestinationCity": "Richmond", "DestinationPostalCode":
-      "23226", "SaleCountryCode": "USA", "SaleAddress1": "1100 Congress Ave", "SaleAddress2":
-      "", "SaleJurisdiction": "VA", "SaleCounty": "", "SaleCity": "Richmond", "SalePostalCode":
-      "23226", "Discounted": false, "OriginCountryCode": null, "OriginJurisdiction":
-      null, "OriginCounty": null, "OriginCity": null, "OriginPostalCode": null, "OriginAddress1":
-      null, "OriginAddress2": null, "UserData": "Shipping", "CustomString1": null,
-      "CustomString2": null, "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2":
-      null, "CustomNumeric3": null}], "InvoiceNumber": null, "Discount": "0", "UserTranId":
-      null}'
+      "OriginCountryCode": null, "OriginJurisdiction": null, "OriginCounty": null,
+      "OriginCity": null, "OriginPostalCode": null, "OriginAddress1": null, "OriginAddress2":
+      null, "UserData": "Shipping", "CustomString1": null, "CustomString2": null,
+      "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2": null, "CustomNumeric3":
+      null}], "InvoiceNumber": null, "Discount": "1.00", "UserTranId": null}'
     headers:
       Accept:
       - '*/*'
@@ -38,7 +37,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '2225'
+      - '2227'
       Content-Type:
       - application/json
       User-Agent:
@@ -50,28 +49,28 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAEAO1ZXW+jOBR9H2n+A+K5iYCkSXbeKKEps2mSDbS7q9U8uOCklghkDUSNqv73sc1H
-        bExINvvQrrZSpVQ+x9fXx8e+Bl6/flEU9SGB2MMgcgL1m6IOtNGqf/0UdAZaMOj0gwHsjPSR3gH+
-        U//aGBkDQwfqFetYderrA31oDPS82U1BmiU0lpv5PkySgr6EaYYjKw4gwbQiRJyC0AMv5ibOopS0
-        692hdoieAD9FcUQIkAb8iwKK8pr/SJw8CCP+uKo4Lvw7g5EPWab6VVPfKYqgCDrRLkY+LADjAFh0
-        CLwvZqE+uKZ6AL9nGCUBYjEp+siD09gHYZ1xrXOMBY6DzE8tkMJ1jPdUpa7GJQxeULSewh0Mmbge
-        H52A3n7LcnK55iWJVbZPau1u9pQW0Gw+sznUAqGfhYDJShhOxJyxEIejIfIU+z1NE/P8LQNRitKm
-        KXArbRgCYr/AzZaOWYw348ZzQQgTwrkBCawiGKOuOPKULFmUwFm2eYKYhqjNeAwTH6PtYXkUIqJn
-        K575h9JRHp3lxJk5vKpWhjHxzj5f6jGfEBGPerfI1eIh5v/SIablOY+8uKU2Rc8bNUferv61uY0P
-        Zu7BkKzOxf62HO+D+FvXLvG31jVG7+5vIuKfhb2XjnV3P5+N/7P27n0we88n7uJye7ve9w9ib214
-        ob21d7e3u7Atx5zWHK5Yc4K8k8/pzw/pBmNjHOPGK8yx6wnrUY7eGf1yrdawe3KzAmsGL+ItW+9o
-        rcwxWqNIQdEqxhtmASVLKEDEI4S8hUfJf0p6SFQJybZRjG59NObbYq6/AxyRkGrbfjRa5SCEQoF6
-        V04jTqUTW75l0xPoBoXhfDUFAcm5yVvc1i3ktpyJuRQIZphCTNSDNaZu9ATeTQijwItrLIHyEKF0
-        gUmu9Eij26+eKwwohQrR62r1nvPVPQRJhvN1N3+VQnN716DRNSlEyZDC2dadEI6KWe1WKdVbDNH6
-        OS2PJ6Hn0Q1HsNyhbWdxRWo7k8VIeymFAsyVUJfIf97ExL4yZREn5AAoEzF6hjFoYDVOM4fMIMBk
-        L+rMD+SuoFhxtKYtirmDx/nGsXAIb2Pc7B1uE58QkGOeULEeU5aSZ7TpyfFOicpRG5Xl8PPllTvJ
-        GvOcFqFpwTqhMKWckLaKImvKoDYxKeGUipTTKB8FzteNY8uCMbBFKTY/iGtiNVHqYh0NI6tVoug4
-        JmrVxGg+qXKMF6sFl+Up8RaF6PuVMUhBU70Yo8SnEbhrlVbCbxXxVTok3C30kXglrd2dRa+fxW+o
-        4sdLrFS2/lmJJTe226XtTO48gXVm/WwtW1Wtlpni9hTqm86K5WeB+6xInxXpsyL9fyqS+4y2W+Fp
-        7lRZyv8pK8fhK0B5eJIMNlsQ7fMn2l5vWLaTU51+DiieIqtDU7VXK0jWYAfH+TsJ1dAMvaMNOj3N
-        07Rv7K8iF1XoHOptBkMy1boEqodS4lJa7FawesQe266n8nMq300VazR2lrZVY1CB2ca9J0HkYYpv
-        G+yZtvquIQBHykjOWEIanyxNGePwLkZYQZVvvORDTtE1/z4Dg0cQZuJM3DjDPnT3SQo3AkBWeoNS
-        7oMP2MHq0FDNHaDvtWQt2eugYiHFOZfGO1guvwVxCR7S+/rl7Scf7g7ewhoAAA==
+        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
     headers:
       Cache-Control:
       - no-store, no-cache
@@ -80,7 +79,7 @@ interactions:
       Content-Encoding:
       - gzip
       Content-Length:
-      - '1243'
+      - '1248'
       Content-Security-Policy:
       - 'default-src ''self''; font-src ''self'' use.typekit.net fonts.gstatic.com
         data: ; img-src ''self'' p.typekit.net *.walkme.com *.cloudfront.net data:
@@ -91,7 +90,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Wed, 30 Jun 2021 17:03:36 GMT
+      - Wed, 30 Jun 2021 17:03:28 GMT
       Feature-Policy:
       - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
         'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
@@ -111,7 +110,7 @@ interactions:
       message: OK
 - request:
     body: '{"EffectiveDate": "2021-06-30", "InvoiceDate": "2021-06-30", "TitleTransferCode":
-      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 2,
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
       "ProductCode": "123", "UnitPrice": "30.00", "UnitOfMeasure": null, "BilledUnits":
       "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
       "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
@@ -160,28 +159,28 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       Cache-Control:
       - no-store, no-cache
@@ -201,7 +200,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Wed, 30 Jun 2021 17:03:37 GMT
+      - Wed, 30 Jun 2021 17:03:29 GMT
       Feature-Policy:
       - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
         'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';

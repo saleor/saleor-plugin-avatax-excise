@@ -1,19 +1,32 @@
 interactions:
 - request:
-    body: '{"EffectiveDate": "2021-05-10", "InvoiceDate": "2021-05-10", "TitleTransferCode":
+    body: '{"EffectiveDate": "2021-06-30", "InvoiceDate": "2021-06-30", "TitleTransferCode":
       "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
-      "ProductCode": "202015500", "UnitPrice": "10.00", "UnitOfMeasure": "PAC", "BilledUnits":
+      "ProductCode": "202015500", "UnitPrice": "10.00", "UnitOfMeasure": null, "BilledUnits":
       "1", "LineAmount": "10.00", "AlternateUnitPrice": "1.000", "TaxIncluded": false,
       "UnitQuantity": 18, "UnitQuantityUnitOfMeasure": "EA", "DestinationCountryCode":
       "USA", "DestinationJurisdiction": "AZ", "DestinationAddress1": "2000 Main Street",
       "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity": "Tempe",
       "DestinationPostalCode": "85281", "SaleCountryCode": "USA", "SaleAddress1":
       "2000 Main Street", "SaleAddress2": "", "SaleJurisdiction": "AZ", "SaleCounty":
-      "", "SaleCity": "Tempe", "SalePostalCode": "85281", "OriginCountryCode": "USA",
-      "OriginJurisdiction": "TX", "OriginCounty": "", "OriginCity": "Austin", "OriginPostalCode":
-      "78701", "OriginAddress1": "1100 Congress Ave", "OriginAddress2": "", "CustomString1":
-      null, "CustomString2": null, "CustomString3": null, "CustomNumeric1": 102.51,
-      "CustomNumeric2": 108.0, "CustomNumeric3": 115.25}], "InvoiceNumber": null}'
+      "", "SaleCity": "Tempe", "SalePostalCode": "85281", "Discounted": false, "OriginCountryCode":
+      "USA", "OriginJurisdiction": "VA", "OriginCounty": "", "OriginCity": "Richmond",
+      "OriginPostalCode": "23226", "OriginAddress1": "1100 Congress Ave", "OriginAddress2":
+      "", "UserData": "202015500", "CustomString1": null, "CustomString2": null, "CustomString3":
+      null, "CustomNumeric1": 102.51, "CustomNumeric2": 108.0, "CustomNumeric3": 115.25},
+      {"InvoiceLine": null, "ProductCode": "TAXFREIGHT", "UnitPrice": null, "UnitOfMeasure":
+      "EA", "BilledUnits": null, "LineAmount": "10.000", "AlternateUnitPrice": null,
+      "TaxIncluded": false, "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null,
+      "DestinationCountryCode": "USA", "DestinationJurisdiction": "AZ", "DestinationAddress1":
+      "2000 Main Street", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
+      "Tempe", "DestinationPostalCode": "85281", "SaleCountryCode": "USA", "SaleAddress1":
+      "2000 Main Street", "SaleAddress2": "", "SaleJurisdiction": "AZ", "SaleCounty":
+      "", "SaleCity": "Tempe", "SalePostalCode": "85281", "Discounted": false, "OriginCountryCode":
+      null, "OriginJurisdiction": null, "OriginCounty": null, "OriginCity": null,
+      "OriginPostalCode": null, "OriginAddress1": null, "OriginAddress2": null, "UserData":
+      "Shipping", "CustomString1": null, "CustomString2": null, "CustomString3": null,
+      "CustomNumeric1": null, "CustomNumeric2": null, "CustomNumeric3": null}], "InvoiceNumber":
+      null, "Discount": "0", "UserTranId": null}'
     headers:
       Accept:
       - '*/*'
@@ -24,7 +37,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '1141'
+      - '2225'
       Content-Type:
       - application/json
       User-Agent:
@@ -35,51 +48,42 @@ interactions:
     uri: https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create
   response:
     body:
-      string: "{\r\n  \"UserTranId\": \"3744a3ee-cd32-4a09-9a0c-d3e35c187d21\",\r\n
-        \ \"TranId\": 40512666,\r\n  \"Status\": \"Success\",\r\n  \"ReturnCode\":
-        0,\r\n  \"TotalTaxAmount\": 4.95,\r\n  \"TransactionTaxes\": [\r\n    {\r\n
-        \     \"TransactionTaxAmounts\": [],\r\n      \"SequenceId\": 1,\r\n      \"TransactionLine\":
-        1,\r\n      \"InvoiceLine\": 1,\r\n      \"CountryCode\": \"USA\",\r\n      \"Jurisdiction\":
-        \"AZ\",\r\n      \"LocalJurisdiction\": \"NONE\",\r\n      \"ProductCategory\":
-        0.0,\r\n      \"TaxingLevel\": \"STATE\",\r\n      \"TaxType\": \"TOBACCO\",\r\n
-        \     \"RateType\": \"TAX\",\r\n      \"RateSubtype\": \"CIGAR\",\r\n      \"CalculationTypeInd\":
-        \"C\",\r\n      \"TaxRate\": 0.2180000000,\r\n      \"TaxQuantity\": 18.0,\r\n
-        \     \"TaxAmount\": 3.92,\r\n      \"TaxExemptionInd\": \"N\",\r\n      \"DeferredInd\":
-        \"N\",\r\n      \"SalesTaxBaseAmount\": 0.0,\r\n      \"LicenseNumber\": \"\",\r\n
-        \     \"UserReturnedValue\": \"\",\r\n      \"ScenarioId\": 2311389,\r\n      \"ScenarioTaxGroupId\":
-        5724,\r\n      \"ScenarioSequence\": 6,\r\n      \"RateDescription\": \"AZ
-        State Cigar Tax (Each) - > 3 Lbs per 1000, Retail Price > $0.05\",\r\n      \"Currency\":
-        \"USD\",\r\n      \"UnitOfMeasure\": \"EA\",\r\n      \"SubtotalInd\": \"U\",\r\n
-        \     \"StatusCode\": \"ACTIVE\",\r\n      \"QuantityInd\": \"B\"\r\n    },\r\n
-        \   {\r\n      \"TransactionTaxAmounts\": [],\r\n      \"SequenceId\": 2,\r\n
-        \     \"TransactionLine\": 1,\r\n      \"InvoiceLine\": 1,\r\n      \"CountryCode\":
-        \"USA\",\r\n      \"Jurisdiction\": \"AZ\",\r\n      \"LocalJurisdiction\":
-        \"04\",\r\n      \"ProductCategory\": 0.0,\r\n      \"TaxingLevel\": \"STA\",\r\n
-        \     \"TaxType\": \"U\",\r\n      \"RateType\": \"G\",\r\n      \"RateSubtype\":
-        \"NONE\",\r\n      \"CalculationTypeInd\": \"P\",\r\n      \"TaxRate\": 0.056000,\r\n
-        \     \"TaxQuantity\": 0.0,\r\n      \"TaxAmount\": 0.78,\r\n      \"TaxExemptionInd\":
-        \"N\",\r\n      \"SalesTaxBaseAmount\": 13.92,\r\n      \"LicenseNumber\":
-        \"\",\r\n      \"RateDescription\": \"AZ STATE TAX - ARIZONA\",\r\n      \"Currency\":
-        \"USD\",\r\n      \"SubtotalInd\": \"C\",\r\n      \"StatusCode\": \"ACTIVE\",\r\n
-        \     \"QuantityInd\": \"B\"\r\n    },\r\n    {\r\n      \"TransactionTaxAmounts\":
-        [],\r\n      \"SequenceId\": 3,\r\n      \"TransactionLine\": 1,\r\n      \"InvoiceLine\":
-        1,\r\n      \"CountryCode\": \"USA\",\r\n      \"Jurisdiction\": \"AZ\",\r\n
-        \     \"LocalJurisdiction\": \"73000\",\r\n      \"ProductCategory\": 0.0,\r\n
-        \     \"TaxingLevel\": \"CIT\",\r\n      \"TaxType\": \"U\",\r\n      \"RateType\":
-        \"G\",\r\n      \"RateSubtype\": \"NONE\",\r\n      \"CalculationTypeInd\":
-        \"P\",\r\n      \"TaxRate\": 0.018000,\r\n      \"TaxQuantity\": 0.0,\r\n
-        \     \"TaxAmount\": 0.25,\r\n      \"TaxExemptionInd\": \"N\",\r\n      \"SalesTaxBaseAmount\":
-        13.92,\r\n      \"LicenseNumber\": \"\",\r\n      \"RateDescription\": \"AZ
-        CITY TAX - TEMPE\",\r\n      \"Currency\": \"USD\",\r\n      \"SubtotalInd\":
-        \"C\",\r\n      \"StatusCode\": \"ACTIVE\",\r\n      \"QuantityInd\": \"B\"\r\n
-        \   }\r\n  ],\r\n  \"TransactionErrors\": [],\r\n  \"UserReturnValue\": \"\"\r\n}"
+      string: !!binary |
+        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
+        qe65cLy9y2Wtj7TA/fI+fnj6D5LfzeFdHAAA
     headers:
       Cache-Control:
-      - private
+      - no-store, no-cache
       Connection:
       - keep-alive
+      Content-Encoding:
+      - gzip
       Content-Length:
-      - '2672'
+      - '1452'
       Content-Security-Policy:
       - 'default-src ''self''; font-src ''self'' use.typekit.net fonts.gstatic.com
         data: ; img-src ''self'' p.typekit.net *.walkme.com *.cloudfront.net data:
@@ -90,7 +94,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Mon, 10 May 2021 20:03:43 GMT
+      - Wed, 30 Jun 2021 17:03:35 GMT
       Feature-Policy:
       - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
         'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
@@ -99,8 +103,6 @@ interactions:
       - strict-origin-when-cross-origin
       Server:
       - ''
-      Set-Cookie:
-      - ASP.NET_SessionId=ufokpv5trhjti51uf1lbywiy; path=/; HttpOnly; SameSite=Lax
       X-Content-Type-Options:
       - nosniff
       X-Frame-Options:
