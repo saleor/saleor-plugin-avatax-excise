@@ -29,6 +29,7 @@ from saleor.plugins.avatax import (
 if TYPE_CHECKING:
     # flake8: noqa
     from saleor.account.models import Address
+    from saleor.channel.models import Channel
     from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
     from saleor.order.models import Order
     from saleor.product.models import (
@@ -191,6 +192,7 @@ def append_line_to_data(
     variant: "ProductVariant",
     shipping_address: "Address",
     variant_channel_listing: "ProductVariantChannelListing",
+    channel: "Channel",
     discounted: bool = False,
 ):
     """
@@ -198,7 +200,7 @@ def append_line_to_data(
     """
 
     stock = variant.stocks.for_country_and_channel(
-        shipping_address.country, variant_channel_listing.channel.slug
+        shipping_address.country, channel.slug
     ).first()
     warehouse_address = stock.warehouse.address if stock else None
 
@@ -375,6 +377,7 @@ def get_checkout_lines_data(
             tax_included=tax_included,
             variant=line_info.variant,
             variant_channel_listing=line_info.channel_listing,
+            channel=channel,
             discounted=discounted,
         )
 
@@ -424,14 +427,17 @@ def get_order_lines_data(
 ) -> List[TransactionLine]:
 
     data: List[TransactionLine] = []
-    order_lines = order.lines.all()
+
+    lines = order.lines.prefetch_related(
+        "variant__channel_listings"
+    )
 
     tax_included = Site.objects.get_current().settings.include_taxes_in_prices
     shipping_address = order.shipping_address
     if shipping_address is None:
         raise TaxError("Shipping address required for ATE tax calculation")
 
-    for line in order_lines:
+    for line in lines:
         variant = line.variant
         if variant is None:
             continue
@@ -441,14 +447,15 @@ def get_order_lines_data(
         )
 
         append_line_to_data(
-            amount=line.unit_price_net_amount * line.quantity,
             data=data,
             line_id=line.id,
             quantity=line.quantity,
-            shipping_address=shipping_address,
+            amount=line.unit_price_net_amount * line.quantity,
             tax_included=tax_included,
             variant=variant,
+            shipping_address=shipping_address,
             variant_channel_listing=variant_channel_listing,
+            channel=order.channel,
             discounted=discounted,
         )
     return data
