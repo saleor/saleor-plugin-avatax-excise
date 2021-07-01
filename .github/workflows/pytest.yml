@@ -31,6 +31,9 @@ jobs:
 
     steps:
 
+      - name: Install system dependencies
+        run: apt-get install -y libpq-dev
+
       - uses: actions/cache@v2
         with:
           path: ~/.cache/pip

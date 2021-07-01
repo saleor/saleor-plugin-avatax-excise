@@ -1,19 +1,33 @@
 interactions:
 - request:
-    body: '{"EffectiveDate": "02/23/21", "InvoiceDate": "02/23/21", "TitleTransferCode":
-      "DEST", "TransactionType": "RETAIL", "TransactionLines": [{"InvoiceLine": 5,
-      "ProductCode": "123", "UnitPrice": "10.000", "UnitOfMeasure": null, "BilledUnits":
+    body: '{"EffectiveDate": "2021-06-30", "InvoiceDate": "2021-06-30", "TitleTransferCode":
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 3,
+      "ProductCode": "123", "UnitPrice": "30.00", "UnitOfMeasure": null, "BilledUnits":
       "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
       "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
       "POL", "DestinationJurisdiction": "", "DestinationAddress1": "T\u0119czowa 7",
       "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity": "WROC\u0141AW",
       "DestinationPostalCode": "53-601", "SaleCountryCode": "POL", "SaleAddress1":
       "T\u0119czowa 7", "SaleAddress2": "", "SaleJurisdiction": "", "SaleCounty":
-      "", "SaleCity": "WROC\u0141AW", "SalePostalCode": "53-601", "OriginCountryCode":
-      "USA", "OriginJurisdiction": "TX", "OriginCounty": "", "OriginCity": "Austin",
-      "OriginPostalCode": "78701", "OriginAddress1": "1100 Congress Ave", "OriginAddress2":
-      "", "CustomString1": null, "CustomString2": null, "CustomString3": null, "CustomNumeric1":
-      null, "CustomNumeric2": null, "CustomNumeric3": null}], "InvoiceNumber": null}'
+      "", "SaleCity": "WROC\u0141AW", "SalePostalCode": "53-601", "Discounted": false,
+      "OriginCountryCode": "USA", "OriginJurisdiction": "VA", "OriginCounty": "",
+      "OriginCity": "Richmond", "OriginPostalCode": "23226", "OriginAddress1": "1100
+      Congress Ave", "OriginAddress2": "", "UserData": "123", "CustomString1": null,
+      "CustomString2": null, "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2":
+      null, "CustomNumeric3": null}, {"InvoiceLine": null, "ProductCode": "TAXFREIGHT",
+      "UnitPrice": null, "UnitOfMeasure": "EA", "BilledUnits": null, "LineAmount":
+      "10.000", "AlternateUnitPrice": null, "TaxIncluded": false, "UnitQuantity":
+      null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode": "POL", "DestinationJurisdiction":
+      "", "DestinationAddress1": "T\u0119czowa 7", "DestinationAddress2": "", "DestinationCounty":
+      "", "DestinationCity": "WROC\u0141AW", "DestinationPostalCode": "53-601", "SaleCountryCode":
+      "POL", "SaleAddress1": "T\u0119czowa 7", "SaleAddress2": "", "SaleJurisdiction":
+      "", "SaleCounty": "", "SaleCity": "WROC\u0141AW", "SalePostalCode": "53-601",
+      "Discounted": false, "OriginCountryCode": null, "OriginJurisdiction": null,
+      "OriginCounty": null, "OriginCity": null, "OriginPostalCode": null, "OriginAddress1":
+      null, "OriginAddress2": null, "UserData": "Shipping", "CustomString1": null,
+      "CustomString2": null, "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2":
+      null, "CustomNumeric3": null}], "InvoiceNumber": null, "Discount": "0", "UserTranId":
+      null}'
     headers:
       Accept:
       - '*/*'
@@ -24,7 +38,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '1135'
+      - '2225'
       Content-Type:
       - application/json
       User-Agent:
@@ -35,26 +49,35 @@ interactions:
     uri: https://excisesbx.avalara.com/api/v1/AvaTaxExcise/transactions/create
   response:
     body:
-      string: "{\r\n  \"UserTranId\": \"\",\r\n  \"TranId\": 38986570,\r\n  \"Status\":
-        \"Errors found\",\r\n  \"ReturnCode\": -1,\r\n  \"TotalTaxAmount\": 0.0,\r\n
-        \ \"TransactionTaxes\": [],\r\n  \"TransactionErrors\": [\r\n    {\r\n      \"SequenceId\":
-        1,\r\n      \"ErrorCode\": \"-875\",\r\n      \"ErrorMessage\": \"The value
-        \\\"\\\" is not a valid Destination Jurisdiction for the specified country.\",\r\n
-        \     \"ErrorLevelInd\": \"Warning\",\r\n      \"TransactionLine\": 1\r\n
-        \   },\r\n    {\r\n      \"SequenceId\": 2,\r\n      \"ErrorCode\": \"-1003\",\r\n
-        \     \"ErrorMessage\": \"No Scenario record found.  TransactionType: RETAIL
-        OriginJurisdiction: TX OriginCountryCode: USA DestinationJurisdiction:  DestinationCountryCode:
-        POL TitleTransferCode: DEST DeterminationProductCategory: 52 SellerId: 0 EffectiveDate:
-        02/23/2021 00:00:00 PerspectiveBusinessType:  ChainLeg: \",\r\n      \"ErrorLevelInd\":
-        \"Critical\",\r\n      \"TransactionLine\": 1\r\n    }\r\n  ],\r\n  \"UserReturnValue\":
-        \"\"\r\n}"
+      string: !!binary |
+        H4sIAAAAAAAEAO1Y3W7bNhS+L9B3IHRtp/pZnc53iuy03pzas5RkwNoLTjq2CcikR0nuvCIXe4y+
+        T/deIynJIyVZSYddDQECJOD38fx8JM/J0eeXLxCyIo7pLLHG6Dtn5Fy6I2+glsMc50Umlq0p54xn
+        aM0KmlgluIK84DRgCQjC0CkXI5bjNMK/+zvBzAVgX9iDk4sMxzlhVOAgrf7ysQWVfiQmEYQ+l79k
+        LPBbATQGFWbpTa2rHVUU1vDN5Wurgd1AluGNgqMtoANOC0AfrA8WIhmiLEdYrpEETSDLCcUyDPRD
+        wUmWEBWTyJqjXGzN9hCTNYEExTI7frxo+prDAdIZlSFa95hTQjcaRctzTqiMyCmxh0Fvtu65bB3b
+        9nrSfc9QGAPFnDDEIWY8KQ/wAiH9NI57GKPJbDUNIrTgZEOonv0Y3fnVclBmLd2P0W3o64qZW3TE
+        2LVczFFE8hRUAGvg5fJkGkZiTw58V+1acpYUcR7gHDaMH8fozfcohDQFPkvErULT9RqEswNMBEMs
+        jF559ivXdh1k22P1g5bA5YlJ0lWRCcGzrMwVBVtM6Bw2QqOeAww4yUmM0yedoPzVvs6CUJ1pc6t2
+        x7Vz73Yx0OAZPTASQwV5OnRF0nSxnuNE3Lr3xe5X4DILS6fUqlYXKJi99VcGwU/FGYgTgAbTcT2D
+        d5UCTSLWYBmUW0ryJRexyjhFGbA7/egsR5DsZkaQSIqUy7uwm/YX6xvAWcGV96X/YyuAnwpMc5If
+        5SuSMdgtEzWjZW4avDPMSclPZa2V0DUHstnm8oK1lAgKzsVjlkFYt+HEwFovqyT5HST9iUnWXRdJ
+        WTq2QqjAUglrReLtjtWV3KAsWSYqeB2I67nuqIPVmWYJ+UnCxUtz1K0RBQoFjG7kCvIPcJ7vnjNH
+        +J7x7hvWXWTUVVjMzzGbKvZabAupMyo171eL4K8//ftzPFPS195wZDvnuJ3CariubvT1S/wH+4TR
+        5SPstrY6p0fgEKfwiLKS0ivpyUZbSwX1iSgJj6onSZ2ySeAJemm0tlAK7FFIZSa7mCFSF6VXJN1M
+        W6caJecxU6UuRndlKjFdpR68LU+N9yh0mwEXPRrXXaSGHk6k/u7n6sbM7tfqFd/W/SL/5+vVdPb2
+        XfRvWltvrzDam8k0i7bRVBy72QD/g67yWC/4xur+XI6fy/FzOf5/lONwS/Z7OaKeanL5x8eBNrOo
+        CbQuSsLDbo/psRzCPe+yXhfVMhYhVZPTtHZpGWOa+o9SjGhDezT07Kge1E7kqro/hXpdQCpSaaZo
+        tWZLicrp0tJz0iZfhavZ12RIAdWDvBFG2m6qzxyQ6VXYhFcgbQh5688d9ml+MU7B0hfLjyqQ3Mmv
+        FAYasoLHEB6zHHYKkOtlE9V2/rPv5YuHvwHADoiu3BEAAA==
     headers:
       Cache-Control:
-      - private
+      - no-store, no-cache
       Connection:
       - keep-alive
+      Content-Encoding:
+      - gzip
       Content-Length:
-      - '895'
+      - '1060'
       Content-Security-Policy:
       - 'default-src ''self''; font-src ''self'' use.typekit.net fonts.gstatic.com
         data: ; img-src ''self'' p.typekit.net *.walkme.com *.cloudfront.net data:
@@ -65,7 +88,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Tue, 23 Feb 2021 21:11:05 GMT
+      - Wed, 30 Jun 2021 17:03:37 GMT
       Feature-Policy:
       - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
         'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
@@ -74,8 +97,6 @@ interactions:
       - strict-origin-when-cross-origin
       Server:
       - ''
-      Set-Cookie:
-      - ASP.NET_SessionId=rrifqfpe24npceu3h4a3dq2f; path=/; HttpOnly; SameSite=Lax
       X-Content-Type-Options:
       - nosniff
       X-Frame-Options:
