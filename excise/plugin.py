@@ -186,8 +186,9 @@ class AvataxExcisePlugin(AvataxPlugin):
         )
         if not taxes_data or "Errors found" in taxes_data["Status"]:
             return previous_value
+        tax_lines = taxes_data.get("TransactionTaxes", [])
         process_checkout_metadata(
-            json.dumps(taxes_data), checkout_info.checkout
+            json.dumps(tax_lines), checkout_info.checkout
         )
 
         checkout = checkout_info.checkout
@@ -370,8 +371,9 @@ class AvataxExcisePlugin(AvataxPlugin):
         )
         if not taxes_data or "Errors found" in taxes_data["Status"]:
             return previous_value
+        tax_lines = taxes_data.get("TransactionTaxes", [])
         process_checkout_metadata(
-            json.dumps(taxes_data), checkout_info.checkout
+            json.dumps(tax_lines), checkout_info.checkout
         )
         return self._calculate_line_total_price(
             taxes_data, checkout_line_info.line.id, previous_value
