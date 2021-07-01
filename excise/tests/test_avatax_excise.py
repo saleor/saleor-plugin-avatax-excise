@@ -63,7 +63,7 @@ def plugin_configuration(db, channel_USD):
 
 
 @pytest.fixture
-def address_usa_tx():
+def address_usa_va():
     return Address.objects.create(
         first_name="John",
         last_name="Doe",
@@ -88,9 +88,9 @@ def cigar_product_type():
 
 
 @pytest.fixture
-def warehouse(address_usa_tx, shipping_zone):
+def warehouse(address_usa_va, shipping_zone):
     warehouse = Warehouse.objects.create(
-        address=address_usa_tx,
+        address=address_usa_va,
         name="Example Warehouse",
         slug="example-warehouse",
         email="test@example.com",
@@ -109,8 +109,12 @@ def reset_sequences():
 
 
 @patch("saleor.plugins.avatax.excise.plugin.api_get_request")
-def test_save_plugin_configuration(api_get_request_mock, settings, channel_USD):
-    settings.PLUGINS = ["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+def test_save_plugin_configuration(
+    api_get_request_mock, settings, channel_USD
+):
+    settings.PLUGINS = [
+        "saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"
+    ]
     api_get_request_mock.return_value = {"authenticated": True}
     manager = get_plugins_manager()
     manager.save_plugin_configuration(
@@ -190,7 +194,8 @@ def test_save_plugin_configuration_authentication_failed(
 @pytest.mark.parametrize(
     "with_discount, expected_net, expected_gross, taxes_in_prices",
     [
-        (True, "15.00", "16.70", True),
+        (False, "30.00", "31.80", False),
+        (True, "15.00", "16.80", False),
     ],
 )
 @override_settings(
@@ -204,7 +209,7 @@ def test_calculate_checkout_line_total(
     taxes_in_prices,
     discount_info,
     checkout_with_item,
-    address_usa_tx,
+    address_usa_va,
     address_usa,
     site_settings,
     shipping_zone,
@@ -213,7 +218,7 @@ def test_calculate_checkout_line_total(
     plugin_configuration()
     manager = get_plugins_manager()
 
-    checkout_with_item.shipping_address = address_usa_tx
+    checkout_with_item.shipping_address = address_usa_va
     checkout_with_item.shipping_method = shipping_zone.shipping_methods.get()
     checkout_with_item.save()
     site_settings.company_address = address_usa
@@ -227,19 +232,16 @@ def test_calculate_checkout_line_total(
     product.product_type.save()
 
     discounts = [discount_info] if with_discount else None
-    discount_amount = Decimal("1.00") if with_discount else Decimal("0.00")
-    checkout_with_item.discount_amount = discount_amount
 
     lines = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(
         checkout_with_item, lines, discounts, manager
     )
-    checkout_line_info = lines[0]
 
     total = manager.calculate_checkout_line_total(
         checkout_info,
         lines,
-        checkout_line_info,
+        lines[0],
         checkout_with_item.shipping_address,
         discounts,
     )
@@ -248,63 +250,7 @@ def test_calculate_checkout_line_total(
         net=Money(expected_net, "USD"), gross=Money(expected_gross, "USD")
     )
 
-
-@pytest.mark.vcr
-@pytest.mark.parametrize(
-    "with_discount, expected_net, expected_gross, taxes_in_prices",
-    [
-        (False, "30.00", "32.29", True),
-    ],
-)
-@override_settings(
-    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
-)
-def test_calculate_checkout_line_total_metadata(
-    reset_sequences,  # pylint: disable=unused-argument
-    with_discount,
-    expected_net,
-    expected_gross,
-    taxes_in_prices,
-    discount_info,
-    checkout_with_item,
-    address_usa_tx,
-    address_usa,
-    site_settings,
-    shipping_zone,
-    plugin_configuration,
-):
-    plugin_configuration()
-    manager = get_plugins_manager()
-
-    checkout_with_item.shipping_address = address_usa_tx
-    checkout_with_item.shipping_method = shipping_zone.shipping_methods.get()
-    checkout_with_item.save()
-    site_settings.company_address = address_usa
-    site_settings.include_taxes_in_prices = taxes_in_prices
-    site_settings.save()
-    line = checkout_with_item.lines.first()
-    product = line.variant.product
-    product.metadata = {}
-    product.save()
-    product.product_type.save()
-    discounts = [discount_info] if with_discount else None
-
-    lines = fetch_checkout_lines(checkout_with_item)
-    checkout_info = fetch_checkout_info(
-        checkout_with_item, lines, discounts, manager
-    )
-    checkout_line_info = lines[0]
-
-    manager.calculate_checkout_line_total(
-        checkout_info,
-        lines,
-        checkout_line_info,
-        checkout_with_item.shipping_address,
-        discounts,
-    )
-
     checkout_with_item.refresh_from_db()
-
     stored_metadata = checkout_with_item.metadata.get(
         get_metadata_key("itemized_taxes")
     )
@@ -320,6 +266,7 @@ def test_calculate_checkout_line_total_metadata(
     "voucher_amount, taxes_in_prices",
     [
         (False, "43.98", "45.90", "0.0", False),
+        (True, "28.98", "30.90", "0.0", False),
     ],
 )
 @override_settings(
@@ -336,7 +283,7 @@ def test_calculate_checkout_total(
     product_with_single_variant,
     discount_info,
     shipping_zone,
-    address_usa_tx,
+    address_usa_va,
     address_usa,
     site_settings,
     monkeypatch,
@@ -356,7 +303,7 @@ def test_calculate_checkout_total(
         lambda *_: False,
     )
     manager = get_plugins_manager()
-    checkout_with_item.shipping_address = address_usa_tx
+    checkout_with_item.shipping_address = address_usa_va
     checkout_with_item.save()
     site_settings.company_address = address_usa
     site_settings.include_taxes_in_prices = taxes_in_prices
@@ -371,8 +318,6 @@ def test_calculate_checkout_total(
     product_with_single_variant.category = non_default_category
     product_with_single_variant.save()
     discounts = [discount_info] if with_discount else None
-    discount_amount = Decimal("1.00") if with_discount else Decimal("0.00")
-    checkout_with_item.discount_amount = discount_amount
     checkout_info = fetch_checkout_info(
         checkout_with_item, [], discounts, manager
     )
@@ -383,7 +328,7 @@ def test_calculate_checkout_total(
 
     lines = fetch_checkout_lines(checkout_with_item)
     total = manager.calculate_checkout_total(
-        checkout_info, lines, address_usa_tx, discounts
+        checkout_info, lines, address_usa_va, discounts
     )
     total = quantize_price(total, total.currency)
     assert total == TaxedMoney(
@@ -400,7 +345,7 @@ def test_calculate_checkout_shipping(
     checkout_with_item,
     shipping_zone,
     discount_info,
-    address_usa_tx,
+    address_usa_va,
     address,
     site_settings,
     plugin_configuration,
@@ -410,7 +355,7 @@ def test_calculate_checkout_shipping(
     site_settings.company_address = address
     site_settings.save()
 
-    checkout_with_item.shipping_address = address_usa_tx
+    checkout_with_item.shipping_address = address_usa_va
     checkout_with_item.shipping_method = shipping_zone.shipping_methods.get()
     checkout_with_item.save()
     lines = fetch_checkout_lines(checkout_with_item)
@@ -572,7 +517,7 @@ def test_calculate_checkout_total_excise_data(
 def test_preprocess_order_creation(
     checkout_with_item,
     address,
-    address_usa_tx,
+    address_usa_va,
     site_settings,
     shipping_zone,
     discount_info,
@@ -583,7 +528,7 @@ def test_preprocess_order_creation(
     site_settings.company_address = address
     site_settings.save()
 
-    checkout_with_item.shipping_address = address_usa_tx
+    checkout_with_item.shipping_address = address_usa_va
     checkout_with_item.shipping_method = shipping_zone.shipping_methods.get()
     checkout_with_item.save()
     discounts = [discount_info]
@@ -670,7 +615,7 @@ def test_order_created_calls_task(
     api_post_request_task_mock,
     order_with_lines,
     address,
-    address_usa_tx,
+    address_usa_va,
     site_settings,
     shipping_zone,
     plugin_configuration,
@@ -681,7 +626,7 @@ def test_order_created_calls_task(
     site_settings.company_address = address
     site_settings.save()
 
-    order_with_lines.shipping_address = address_usa_tx
+    order_with_lines.shipping_address = address_usa_va
     order_with_lines.shipping_method = shipping_zone.shipping_methods.get()
     order_with_lines.save()
 
@@ -724,7 +669,7 @@ def test_order_created(
     order_with_lines,
     product,
     shipping_zone,
-    address_usa_tx,
+    address_usa_va,
     site_settings,
     plugin_configuration,
     cigar_product_type,
@@ -732,10 +677,10 @@ def test_order_created(
     plugin_configuration()
     manager = get_plugins_manager()
 
-    site_settings.company_address = address_usa_tx
+    site_settings.company_address = address_usa_va
     site_settings.save()
 
-    order_with_lines.shipping_address = address_usa_tx
+    order_with_lines.shipping_address = address_usa_va
     order_with_lines.shipping_method = shipping_zone.shipping_methods.get()
     shipping_method = shipping_zone.shipping_methods.get()
     shipping_method.price_amount = 0

@@ -1,6 +1,6 @@
 interactions:
 - request:
-    body: '{"EffectiveDate": "2021-06-30", "InvoiceDate": "2021-06-30", "TitleTransferCode":
+    body: '{"EffectiveDate": "2021-07-01", "InvoiceDate": "2021-07-01", "TitleTransferCode":
       "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 3,
       "ProductCode": "123", "UnitPrice": "30.00", "UnitOfMeasure": null, "BilledUnits":
       "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
@@ -50,25 +50,25 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAEAO1Y3W7bNhS+L9B3IHRtp/pZnc53iuy03pzas5RkwNoLTjq2CcikR0nuvCIXe4y+
-        T/deIynJIyVZSYddDQECJOD38fx8JM/J0eeXLxCyIo7pLLHG6Dtn5Fy6I2+glsMc50Umlq0p54xn
-        aM0KmlgluIK84DRgCQjC0CkXI5bjNMK/+zvBzAVgX9iDk4sMxzlhVOAgrf7ysQWVfiQmEYQ+l79k
-        LPBbATQGFWbpTa2rHVUU1vDN5Wurgd1AluGNgqMtoANOC0AfrA8WIhmiLEdYrpEETSDLCcUyDPRD
-        wUmWEBWTyJqjXGzN9hCTNYEExTI7frxo+prDAdIZlSFa95hTQjcaRctzTqiMyCmxh0Fvtu65bB3b
-        9nrSfc9QGAPFnDDEIWY8KQ/wAiH9NI57GKPJbDUNIrTgZEOonv0Y3fnVclBmLd2P0W3o64qZW3TE
-        2LVczFFE8hRUAGvg5fJkGkZiTw58V+1acpYUcR7gHDaMH8fozfcohDQFPkvErULT9RqEswNMBEMs
-        jF559ivXdh1k22P1g5bA5YlJ0lWRCcGzrMwVBVtM6Bw2QqOeAww4yUmM0yedoPzVvs6CUJ1pc6t2
-        x7Vz73Yx0OAZPTASQwV5OnRF0nSxnuNE3Lr3xe5X4DILS6fUqlYXKJi99VcGwU/FGYgTgAbTcT2D
-        d5UCTSLWYBmUW0ryJRexyjhFGbA7/egsR5DsZkaQSIqUy7uwm/YX6xvAWcGV96X/YyuAnwpMc5If
-        5SuSMdgtEzWjZW4avDPMSclPZa2V0DUHstnm8oK1lAgKzsVjlkFYt+HEwFovqyT5HST9iUnWXRdJ
-        WTq2QqjAUglrReLtjtWV3KAsWSYqeB2I67nuqIPVmWYJ+UnCxUtz1K0RBQoFjG7kCvIPcJ7vnjNH
-        +J7x7hvWXWTUVVjMzzGbKvZabAupMyo171eL4K8//ftzPFPS195wZDvnuJ3CariubvT1S/wH+4TR
-        5SPstrY6p0fgEKfwiLKS0ivpyUZbSwX1iSgJj6onSZ2ySeAJemm0tlAK7FFIZSa7mCFSF6VXJN1M
-        W6caJecxU6UuRndlKjFdpR68LU+N9yh0mwEXPRrXXaSGHk6k/u7n6sbM7tfqFd/W/SL/5+vVdPb2
-        XfRvWltvrzDam8k0i7bRVBy72QD/g67yWC/4xur+XI6fy/FzOf5/lONwS/Z7OaKeanL5x8eBNrOo
-        CbQuSsLDbo/psRzCPe+yXhfVMhYhVZPTtHZpGWOa+o9SjGhDezT07Kge1E7kqro/hXpdQCpSaaZo
-        tWZLicrp0tJz0iZfhavZ12RIAdWDvBFG2m6qzxyQ6VXYhFcgbQh5688d9ml+MU7B0hfLjyqQ3Mmv
-        FAYasoLHEB6zHHYKkOtlE9V2/rPv5YuHvwHADoiu3BEAAA==
+        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
     headers:
       Cache-Control:
       - no-store, no-cache
@@ -88,7 +88,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Wed, 30 Jun 2021 17:03:37 GMT
+      - Thu, 01 Jul 2021 16:55:06 GMT
       Feature-Policy:
       - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
         'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';

@@ -181,16 +181,19 @@ class AvataxExcisePlugin(AvataxPlugin):
             logger.debug("Checkout Invalid in Calculate Checkout Total")
             return checkout_total
 
-        checkout = checkout_info.checkout
-        response = get_checkout_tax_data(
+        taxes_data = get_checkout_tax_data(
             checkout_info, lines, discounts, self.config
         )
-        if not response or "Errors found" in response["Status"]:
-            return checkout_total
+        if not taxes_data or "Errors found" in taxes_data["Status"]:
+            return previous_value
+        process_checkout_metadata(
+            json.dumps(taxes_data), checkout_info.checkout
+        )
 
+        checkout = checkout_info.checkout
         currency = checkout.currency
         discount = checkout.discount
-        tax = Money(Decimal(response.get("TotalTaxAmount", 0.0)), currency)
+        tax = Money(Decimal(taxes_data.get("TotalTaxAmount", 0.0)), currency)
         net = checkout_total.net
         gross = net + tax
         taxed_total = quantize_price(
@@ -242,13 +245,13 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not _validate_checkout(checkout_info, lines):
             return previous_value
 
-        response = get_checkout_tax_data(
+        taxes_data = get_checkout_tax_data(
             checkout_info, lines, discounts, self.config
         )
-        if not response or "error" in response:
+        if not taxes_data or "error" in taxes_data:
             return previous_value
 
-        tax_lines = response.get("TransactionTaxes", [])
+        tax_lines = taxes_data.get("TransactionTaxes", [])
         if not tax_lines:
             return previous_value
 
@@ -291,16 +294,16 @@ class AvataxExcisePlugin(AvataxPlugin):
             span = scope.span
             span.set_tag(opentracing.tags.COMPONENT, "tax")
             span.set_tag("service.name", "avatax_excise")
-            response = api_post_request(transaction_url, data, self.config)
-        if not response or response.get("Status") != "Success":
-            transaction_errors = response.get("TransactionErrors")
+            taxes_data = api_post_request(transaction_url, data, self.config)
+        if not taxes_data or taxes_data.get("Status") != "Success":
+            transaction_errors = taxes_data.get("TransactionErrors")
             customer_msg = ""
             if isinstance(transaction_errors, list):
                 for error in transaction_errors:
                     error_message = error.get("ErrorMessage")
                     if error_message:
                         customer_msg += error_message
-                    error_code = response.get("ErrorCode", "")
+                    error_code = taxes_data.get("ErrorCode", "")
                     logger.warning(
                         "Unable to calculate taxes for checkout %s"
                         "error_code: %s error_msg: %s",
@@ -359,32 +362,19 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not checkout_line_info.product.charge_taxes:
             return previous_value
 
-        checkout = checkout_info.checkout
         if not _validate_checkout(checkout_info, lines):
             return previous_value
 
-        response = get_checkout_tax_data(
+        taxes_data = get_checkout_tax_data(
             checkout_info, lines, discounts, self.config
         )
-        if not response or "Error" in response["Status"]:
+        if not taxes_data or "Errors found" in taxes_data["Status"]:
             return previous_value
-
-        tax = Decimal(response.get("TotalTaxAmount", "0.00"))
-        tax_lines = response.get("TransactionTaxes", [])
-        if not tax_lines:
-            return previous_value
-
-        process_checkout_metadata(json.dumps(tax_lines), checkout)
-
-        currency = checkout.currency
-        net = Decimal(previous_value.net.amount)
-
-        line_net = Money(amount=net, currency=currency)
-        line_gross = Money(amount=net + tax, currency=currency)
-
-        return quantize_price(
-            TaxedMoney(net=line_net, gross=line_gross),
-            currency
+        process_checkout_metadata(
+            json.dumps(taxes_data), checkout_info.checkout
+        )
+        return self._calculate_line_total_price(
+            taxes_data, checkout_line_info.line.id, previous_value
         )
 
     def calculate_order_line_total(
@@ -458,8 +448,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not _validate_order(order):
             return zero_taxed_money(order.total.currency)
 
-        response = get_order_tax_data(order, self.config, False)
-        tax_lines = response.get("TransactionTaxes", [])
+        taxes_data = get_order_tax_data(order, self.config, False)
+        tax_lines = taxes_data.get("TransactionTaxes", [])
         if not tax_lines:
             return previous_value
 
@@ -503,13 +493,13 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not valid:
             return None
 
-        response = get_checkout_tax_data(
+        taxes_data = get_checkout_tax_data(
             checkout_info, lines_info, discounts, self.config
         )
-        if not response or "error" in response:
+        if not taxes_data or "error" in taxes_data:
             return None
 
-        return response
+        return taxes_data
 
     def _get_order_tax_data(self, order: "Order", previous_value: Decimal):
         if self._skip_plugin(previous_value):
@@ -519,8 +509,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not valid:
             return None
 
-        response = get_order_tax_data(order, self.config, False)
-        if not response or "error" in response:
+        taxes_data = get_order_tax_data(order, self.config, False)
+        if not taxes_data or "error" in taxes_data:
             return None
 
-        return response
+        return taxes_data
