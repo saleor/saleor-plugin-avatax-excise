@@ -34,7 +34,7 @@ def api_post_request_task(
         )
         logger.error(msg, order_id)
         return
-    if not data.get("TransactionLines"):
+    if not getattr(data, "TransactionLines", None):
         msg = (
             "The order doesn't have any line which should be "
             "sent to Avatax Excise."
@@ -64,6 +64,7 @@ def api_post_request_task(
             order.token,
             response,
         )
+        raise TaxError(msg)
     else:
         user_tran_id = response.get('UserTranId')
         if config.autocommit and commit_url and user_tran_id:
@@ -85,17 +86,19 @@ def api_post_request_task(
                     order.token,
                     response,
                 )
+                raise TaxError(msg)
 
-    tax_item = {
+    tax_metadata = {
         get_metadata_key("itemized_taxes"): json.dumps(
             response.get("TransactionTaxes")
-        )
+        ),
+        get_metadata_key("tax_transaction"): json.dumps(
+            response.get("Transaction")
+        ),
     }
-    order.store_value_in_metadata(items=tax_item)
+    order.store_value_in_metadata(items=tax_metadata)
     order.save()
 
     external_notification_event(
         order=order, user=None, message=msg, parameters=None
     )
-    if not response or "Error" in response.get("Status"):
-        raise TaxError
