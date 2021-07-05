@@ -5,107 +5,25 @@ from urllib.parse import urljoin
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.core.management.color import no_style
-from django.db import connection
 from django.test import override_settings
 from prices import Money, TaxedMoney
 from requests import RequestException
 from dataclasses import asdict
-from saleor.account.models import Address
 
-from saleor.checkout.models import CheckoutLine
 from saleor.checkout.utils import add_variant_to_checkout
 from saleor.checkout.fetch import fetch_checkout_info, fetch_checkout_lines
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import TaxError
-from saleor.product.models import ProductType, ProductVariant
-from saleor.warehouse.models import Warehouse
+from saleor.product.models import ProductVariant
 from saleor.plugins.manager import get_plugins_manager
 from saleor.plugins.models import PluginConfiguration
+from ..plugin import AvataxExcisePlugin
 from ..utils import (
     AvataxConfiguration,
     api_post_request,
     get_metadata_key,
     get_order_request_data,
 )
-from ..plugin import AvataxExcisePlugin
-
-
-@pytest.fixture
-def plugin_configuration(db, channel_USD):
-    def set_configuration(
-        username="test",
-        password="test",
-        company_id="test",
-        sandbox=True,
-        channel=None,
-    ):
-        channel = channel or channel_USD
-        data = {
-            "active": True,
-            "name": AvataxExcisePlugin.PLUGIN_NAME,
-            "channel": channel,
-            "configuration": [
-                {"name": "Username or account", "value": username},
-                {"name": "Password or license", "value": password},
-                {"name": "Use sandbox", "value": sandbox},
-                {"name": "Company name", "value": company_id},
-                {"name": "Autocommit", "value": False},
-                {"name": "Shipping Product Code", "value": "TAXFREIGHT"},
-            ],
-        }
-        configuration = PluginConfiguration.objects.create(
-            identifier=AvataxExcisePlugin.PLUGIN_ID, **data
-        )
-        return configuration
-
-    return set_configuration
-
-
-@pytest.fixture
-def address_usa_va():
-    return Address.objects.create(
-        first_name="John",
-        last_name="Doe",
-        street_address_1="1100 Congress Ave",
-        city="Richmond",
-        postal_code="23226",
-        country_area="VA",
-        country="US",
-        phone="",
-    )
-
-
-@pytest.fixture
-def cigar_product_type():
-    return ProductType.objects.create(
-        name="Cigar",
-        private_metadata={
-            "mirumee.taxes.avalara_excise:UnitOfMeasure": "PAC",
-            "mirumee.taxes.avalara_excise:UnitQuantityUnitOfMeasure": "EA",
-        },
-    )
-
-
-@pytest.fixture
-def warehouse(address_usa_va, shipping_zone):
-    warehouse = Warehouse.objects.create(
-        address=address_usa_va,
-        name="Example Warehouse",
-        slug="example-warehouse",
-        email="test@example.com",
-    )
-    warehouse.shipping_zones.add(shipping_zone)
-    warehouse.save()
-    return warehouse
-
-
-@pytest.fixture
-def reset_sequences():
-    sequence_sql = connection.ops.sequence_reset_sql(no_style(), [CheckoutLine])
-    with connection.cursor() as cursor:
-        for sql in sequence_sql:
-            cursor.execute(sql)
 
 
 @patch("saleor.plugins.avatax.excise.plugin.api_get_request")
@@ -251,13 +169,12 @@ def test_calculate_checkout_line_total(
     )
 
     checkout_with_item.refresh_from_db()
-    stored_metadata = checkout_with_item.metadata.get(
+    taxes_metadata = checkout_with_item.metadata.get(
         get_metadata_key("itemized_taxes")
     )
 
-    # Check if tax response is stored in metadata
-    assert stored_metadata is not None
-    assert len(stored_metadata) > 0
+    assert taxes_metadata is not None
+    assert len(taxes_metadata) > 0
 
 
 @pytest.mark.vcr

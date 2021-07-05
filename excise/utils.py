@@ -205,7 +205,7 @@ def append_line_to_data(
     warehouse_address = stock.warehouse.address if stock else None
 
     unit_of_measure = variant.product.product_type.\
-        get_value_from_private_metadata(get_metadata_key("UnitQuantity"))
+        get_value_from_private_metadata(get_metadata_key("UnitOfMeasure"))
     unit_quantity = variant.get_value_from_private_metadata(
         get_metadata_key("UnitQuantity"))
     unit_quantity_of_measure = variant.product.product_type.\
@@ -482,26 +482,6 @@ def _fetch_new_taxes_data(
     return response
 
 
-def commit_transaction(
-    user_tran_id: str,
-    config: AvataxConfiguration,
-) -> Dict[str, Any]:
-
-    commit_url = urljoin(
-        get_api_url(config.use_sandbox),
-        f"AvaTaxExcise/transactions/{user_tran_id}/commit",
-    )
-
-    with opentracing.global_tracer().start_active_span(
-        "avatax_excise.transactions.commit"
-    ) as scope:
-        span = scope.span
-        span.set_tag(opentracing.tags.COMPONENT, "tax")
-        span.set_tag("service.name", "avatax_excise")
-        response = api_post_request(commit_url, {}, config)
-    return response
-
-
 def get_cached_response_or_fetch(
     data: Dict[str, Dict],
     token_in_cache: str,
@@ -580,54 +560,43 @@ def get_order_tax_data(
     return response
 
 
-def _retrieve_meta_data_from_cache(token):
-    cached_data = cache.get(token)
-    return cached_data
-
-
 def metadata_requires_update(
-    metadata: str,
+    metadata: Dict[str, Dict],
     token_in_cache: str,
-    force_refresh: bool = False,
 ):
     """
     Check if Checkout metadata needs to be reset.
-    The itemized taxes from ATE are stored in a cache.
-    If an object doesn't exist in cache or something has changed,
-    taxes need to be refetched.
     """
-    if force_refresh:
+
+    cached_data = cache.get(token_in_cache)
+    if not cached_data or cached_data != metadata:
         return True
-
-    cached_metadata = _retrieve_meta_data_from_cache(token_in_cache)
-
-    if not cached_metadata:
-        return True
-
-    if cached_metadata != metadata:
-        return True
-
     return False
 
 
 def process_checkout_metadata(
-    metadata: str,
+    taxes_data: Dict[str, Dict],
     checkout: "Checkout",
     force_refresh: bool = False,
     cache_time: int = CACHE_TIME,
 ):
     """
-    Check for Checkout metadata in cache.
-    Do nothing if metadata are the same. Set new metadata in other cases.
+    Process and store response from excise API in cache and metadata
     """
     metadata_key = get_metadata_key("checkout_metadata_")
     data_cache_key = f"{metadata_key}{checkout.token}"
-    tax_item = {
-        get_metadata_key("itemized_taxes"): metadata
+
+    metadata = {
+        get_metadata_key("itemized_taxes"): json.dumps(
+            taxes_data.get("TransactionTaxes")
+        ),
+        get_metadata_key("tax_transaction"): json.dumps(
+            taxes_data.get("Transaction")
+        ),
     }
 
-    if metadata_requires_update(tax_item, data_cache_key) or force_refresh:
+    if force_refresh or metadata_requires_update(metadata, data_cache_key):
         checkout.refresh_from_db()
-        checkout.store_value_in_metadata(items=tax_item)
+        checkout.store_value_in_metadata(items=metadata)
         checkout.save()
-        cache.set(data_cache_key, tax_item, cache_time)
+        cache.set(data_cache_key, metadata, cache_time)
