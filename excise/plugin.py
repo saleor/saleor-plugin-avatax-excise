@@ -191,7 +191,6 @@ class AvataxExcisePlugin(AvataxPlugin):
 
         checkout = checkout_info.checkout
         currency = checkout.currency
-        discount = checkout.discount
         tax = Money(Decimal(taxes_data.get("TotalTaxAmount", 0.0)), currency)
         net = checkout_total.net
         gross = net + tax
@@ -205,9 +204,6 @@ class AvataxExcisePlugin(AvataxPlugin):
             checkout_info.channel,
             discounts,
         )
-
-        if discount:
-            total -= discount
 
         return max(total, zero_taxed_money(total.currency))
 

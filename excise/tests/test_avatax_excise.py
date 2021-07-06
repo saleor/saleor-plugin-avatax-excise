@@ -183,7 +183,9 @@ def test_calculate_checkout_line_total(
     "voucher_amount, taxes_in_prices",
     [
         (False, "43.98", "45.90", "0.0", False),
-        (True, "28.98", "30.90", "0.0", False),
+        (False, "39.98", "41.65", "4.0", False),
+        (True, "28.98", "30.01", "0.0", False),
+        (True, "24.98", "25.76", "4.0", False),
     ],
 )
 @override_settings(
