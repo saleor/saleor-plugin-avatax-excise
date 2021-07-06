@@ -287,6 +287,14 @@ def test_calculate_checkout_shipping(
         net=Money("10.00", "USD"), gross=Money("10.00", "USD")
     )
 
+    checkout_with_item.refresh_from_db()
+    taxes_metadata = checkout_with_item.metadata.get(
+        get_metadata_key("itemized_taxes")
+    )
+
+    assert taxes_metadata is not None
+    assert len(taxes_metadata) > 0
+
 
 @patch("saleor.plugins.avatax.plugin.AvataxPlugin._skip_plugin")
 @override_settings(
