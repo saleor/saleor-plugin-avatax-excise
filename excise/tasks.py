@@ -34,7 +34,7 @@ def api_post_request_task(
         )
         logger.error(msg, order_id)
         return
-    if not getattr(data, "TransactionLines", None):
+    if not data.get("TransactionLines", None):
         msg = (
             "The order doesn't have any line which should be "
             "sent to Avatax Excise."
