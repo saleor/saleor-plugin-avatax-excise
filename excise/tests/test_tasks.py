@@ -67,7 +67,7 @@ def test_api_post_request_task_sends_request(
 
     api_post_request_task(
         transaction_url,
-        request_data,
+        asdict(request_data),
         asdict(config),
         order_with_lines.id,
         commit_url

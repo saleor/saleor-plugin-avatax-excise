@@ -183,7 +183,9 @@ def test_calculate_checkout_line_total(
     "voucher_amount, taxes_in_prices",
     [
         (False, "43.98", "45.90", "0.0", False),
-        (True, "28.98", "30.90", "0.0", False),
+        (False, "39.98", "41.65", "4.0", False),
+        (True, "28.98", "30.01", "0.0", False),
+        (True, "24.98", "25.76", "4.0", False),
     ],
 )
 @override_settings(
@@ -286,6 +288,14 @@ def test_calculate_checkout_shipping(
     assert shipping_price == TaxedMoney(
         net=Money("10.00", "USD"), gross=Money("10.00", "USD")
     )
+
+    checkout_with_item.refresh_from_db()
+    taxes_metadata = checkout_with_item.metadata.get(
+        get_metadata_key("itemized_taxes")
+    )
+
+    assert taxes_metadata is not None
+    assert len(taxes_metadata) > 0
 
 
 @patch("saleor.plugins.avatax.plugin.AvataxPlugin._skip_plugin")

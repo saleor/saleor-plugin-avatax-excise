@@ -403,12 +403,11 @@ def generate_request_data_from_checkout(
     user_tran_id = None
     discounted = True if discount_amount > 0 else False
 
-    # Do not discount product price
     lines = get_checkout_lines_data(
         checkout_info,
         lines_info,
         config,
-        discounts=None,
+        discounts=discounts,
         discounted=discounted,
     )
 
