@@ -51,49 +51,69 @@ def api_post_request_task(
         span.set_tag(opentracing.tags.COMPONENT, "tax")
         span.set_tag("service.name", "avatax_excise")
 
-        response = api_post_request(transaction_url, data, config)
-    msg = f"Order sent to Avatax Excise. Order ID: {order.token}"
-    if not response or "Error" in response.get("Status"):
-        errors = response.get("TransactionErrors", [])
-        avatax_msg = ""
-        for error in errors:
-            avatax_msg += error.get("ErrorMessage", "")
-        msg = f"Unable to send order to Avatax Excise. {avatax_msg}"
+        tax_response = api_post_request(transaction_url, data, config)
+
+    msg = ""
+    if not tax_response:
+        msg = (
+            "Empty response received from Excise API, "
+            f"Order: {order.token}"
+        )
+        logger.warning(
+            "Empty response received from Excise API, Order: %s",
+            order.token
+        )
+        external_notification_event(
+            order=order, user=None, message=msg, parameters=None
+        )
+        return
+    elif tax_response.get("ReturnCode", -1) != 0:
+        errors = tax_response.get("TransactionErrors", [])
+        error_msg = ". ".join([
+            error.get("ErrorMessage", "")
+            for error in errors
+        ])
+        msg = f"Unable to send order to Avatax Excise. {error_msg}"
         logger.warning(
             "Unable to send order %s to Avatax Excise. Response %s",
             order.token,
-            response,
+            tax_response,
         )
-        raise TaxError(msg)
+        external_notification_event(
+            order=order, user=None, message=msg, parameters=None
+        )
+        return
     else:
-        user_tran_id = response.get('UserTranId')
+        msg = f"Order sent to Avatax Excise. Order ID: {order.token}"
+        user_tran_id = tax_response.get("UserTranId")
         if config.autocommit and commit_url and user_tran_id:
             commit_url = commit_url.format(user_tran_id)
-            response = api_post_request(
+            commit_response = api_post_request(
                 commit_url,
                 {},
                 config,
             )
-            errors = response.get("TransactionErrors", [])
-            avatax_msg = ""
-            for error in errors:
-                avatax_msg += error.get("ErrorMessage", "")
             msg = f"Order committed to Avatax Excise. Order ID: {order.token}"
-            if not response or "Error" in response.get("Status"):
-                msg = f"Unable to commit order to Avatax Excise. {avatax_msg}"
+            commit_status = commit_response.get("Status", '')
+            if not commit_response or "Error" in commit_status:
+                errors = commit_response.get("TransactionErrors", [])
+                error_msg = ". ".join([
+                    error.get("ErrorMessage", "")
+                    for error in errors
+                ])
+                msg = f"Unable to commit order to Avatax Excise. {error_msg}"
                 logger.warning(
                     "Unable to commit order %s to Avatax Excise. Response %s",
                     order.token,
-                    response,
+                    commit_response,
                 )
-                raise TaxError(msg)
 
     tax_metadata = {
         get_metadata_key("itemized_taxes"): json.dumps(
-            response.get("TransactionTaxes")
+            tax_response.get("TransactionTaxes")
         ),
         get_metadata_key("tax_transaction"): json.dumps(
-            response.get("Transaction")
+            tax_response.get("Transaction")
         ),
     }
     order.store_value_in_metadata(items=tax_metadata)
