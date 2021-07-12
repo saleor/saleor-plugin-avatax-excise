@@ -59,7 +59,10 @@ def api_post_request_task(
             "Empty response received from Excise API, "
             f"Order: {order.token}"
         )
-        logger.warning(msg)
+        logger.warning(
+            "Empty response received from Excise API, Order: %s",
+            order.token
+        )
         external_notification_event(
             order=order, user=None, message=msg, parameters=None
         )
@@ -91,7 +94,8 @@ def api_post_request_task(
                 config,
             )
             msg = f"Order committed to Avatax Excise. Order ID: {order.token}"
-            if not commit_response or "Error" in commit_response.get("Status"):
+            commit_status = commit_response.get("Status", '')
+            if not commit_response or "Error" in commit_status:
                 errors = commit_response.get("TransactionErrors", [])
                 error_msg = ". ".join([
                     error.get("ErrorMessage", "")
