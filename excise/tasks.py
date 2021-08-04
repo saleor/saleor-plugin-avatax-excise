@@ -12,6 +12,7 @@ from .utils import (
     AvataxConfiguration,
     api_post_request,
     get_metadata_key,
+    build_metadata
 )
 
 logger = logging.getLogger(__name__)
@@ -108,14 +109,7 @@ def api_post_request_task(
                     commit_response,
                 )
 
-    tax_metadata = {
-        get_metadata_key("itemized_taxes"): json.dumps(
-            tax_response.get("TransactionTaxes")
-        ),
-        get_metadata_key("tax_transaction"): json.dumps(
-            tax_response.get("Transaction")
-        ),
-    }
+    tax_metadata = build_metadata(tax_response)
     order.store_value_in_metadata(items=tax_metadata)
     order.save()
 

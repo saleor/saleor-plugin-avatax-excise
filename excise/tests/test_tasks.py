@@ -150,8 +150,17 @@ def test_api_post_request_task_with_valid_productcodes(
         get_metadata_key("itemized_taxes")
     )
 
+    sales_tax = order_with_lines.metadata.get(
+        get_metadata_key("sales_tax")
+    )
+    other_tax = order_with_lines.metadata.get(
+        get_metadata_key("other_tax")
+    )
+
     assert taxes_metadata is not None
     assert len(taxes_metadata) > 0
+    assert sales_tax >= 0
+    assert other_tax >= 0
 
 
 def test_api_post_request_task_order_doesnt_have_any_lines_with_taxes_to_calculate(

@@ -572,6 +572,21 @@ def metadata_requires_update(
         return True
     return False
 
+def build_metadata(taxes_data: Dict[str, Dict]):
+    """
+    Build the tax related metadata, add extra fields that we need as well
+    """
+    return {
+        get_metadata_key("itemized_taxes"): json.dumps(
+            taxes_data.get("TransactionTaxes")
+        ),
+        get_metadata_key("tax_transaction"): json.dumps(
+            taxes_data.get("Transaction")
+        ),
+        get_metadata_key("sales_tax"): get_sales_tax(taxes_data),
+        get_metadata_key("other_tax"): get_other_tax(taxes_data),
+    }
+
 
 def process_checkout_metadata(
     taxes_data: Dict[str, Dict],
@@ -585,17 +600,41 @@ def process_checkout_metadata(
     metadata_key = get_metadata_key("checkout_metadata_")
     data_cache_key = f"{metadata_key}{checkout.token}"
 
-    metadata = {
-        get_metadata_key("itemized_taxes"): json.dumps(
-            taxes_data.get("TransactionTaxes")
-        ),
-        get_metadata_key("tax_transaction"): json.dumps(
-            taxes_data.get("Transaction")
-        ),
-    }
+    metadata = build_metadata(taxes_data)
 
     if force_refresh or metadata_requires_update(metadata, data_cache_key):
         checkout.refresh_from_db()
         checkout.store_value_in_metadata(items=metadata)
         checkout.save()
         cache.set(data_cache_key, metadata, cache_time)
+
+
+def get_sales_tax(taxes_data: Dict[str, Dict]) -> int:
+    """
+    Build the sales tax amount where tax type is either "S" or "U"
+    """
+    return sum(
+        map(
+            lambda tax_data: tax_data.get("TaxAmount", 0),
+            filter(
+                lambda tax_data: tax_data.get("TaxType") == "S" or tax_data.get("TaxType") == "U",
+                taxes_data.get("TransactionTaxes", []),
+            ),
+        )
+    )
+
+
+def get_other_tax(taxes_data: Dict[str, Dict]) -> int:
+    """
+    Building the remaining tax amount after getting the sales tax,
+    i.e. where the tax type is neither "S" nor "U"
+    """
+    return sum(
+        map(
+            lambda tax_data: tax_data.get("TaxAmount", 0),
+            filter(
+                lambda tax_data: tax_data.get("TaxType") != "S" and tax_data.get("TaxType") != "U",
+                taxes_data.get("TransactionTaxes", []),
+            ),
+        )
+    )

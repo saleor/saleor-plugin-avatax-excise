@@ -173,8 +173,17 @@ def test_calculate_checkout_line_total(
         get_metadata_key("itemized_taxes")
     )
 
+    sales_tax = checkout_with_item.metadata.get(
+        get_metadata_key("sales_tax")
+    )
+    other_tax = checkout_with_item.metadata.get(
+        get_metadata_key("other_tax")
+    )
+
     assert taxes_metadata is not None
     assert len(taxes_metadata) > 0
+    assert sales_tax >= 0
+    assert other_tax >= 0
 
 
 @pytest.mark.vcr
@@ -294,8 +303,17 @@ def test_calculate_checkout_shipping(
         get_metadata_key("itemized_taxes")
     )
 
+    sales_tax = checkout_with_item.metadata.get(
+        get_metadata_key("sales_tax")
+    )
+    other_tax = checkout_with_item.metadata.get(
+        get_metadata_key("other_tax")
+    )
+
     assert taxes_metadata is not None
     assert len(taxes_metadata) > 0
+    assert sales_tax >= 0
+    assert other_tax >= 0
 
 
 @patch("saleor.plugins.avatax.plugin.AvataxPlugin._skip_plugin")
