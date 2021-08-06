@@ -41,7 +41,7 @@ def api_post_request_task(
             "sent to Avatax Excise."
         )
         external_notification_event(
-            order=order, user=None, message=msg, parameters=None
+            order=order, user=None, app=None, message=msg, parameters=None
         )
         return
 
@@ -65,7 +65,7 @@ def api_post_request_task(
             order.token
         )
         external_notification_event(
-            order=order, user=None, message=msg, parameters=None
+            order=order, user=None, app=None, message=msg, parameters=None
         )
         return
     elif tax_response.get("ReturnCode", -1) != 0:
@@ -81,7 +81,7 @@ def api_post_request_task(
             tax_response,
         )
         external_notification_event(
-            order=order, user=None, message=msg, parameters=None
+            order=order, user=None, app=None, message=msg, parameters=None
         )
         return
     else:
@@ -114,5 +114,5 @@ def api_post_request_task(
     order.save()
 
     external_notification_event(
-        order=order, user=None, message=msg, parameters=None
+        order=order, user=None, app=None, message=msg, parameters=None
     )
