@@ -1,4 +1,5 @@
 import json
+from dataclasses import asdict
 from decimal import Decimal
 from unittest.mock import Mock, patch
 from urllib.parse import urljoin
@@ -8,22 +9,17 @@ from django.core.exceptions import ValidationError
 from django.test import override_settings
 from prices import Money, TaxedMoney
 from requests import RequestException
-from dataclasses import asdict
-
-from saleor.checkout.utils import add_variant_to_checkout
 from saleor.checkout.fetch import fetch_checkout_info, fetch_checkout_lines
+from saleor.checkout.utils import add_variant_to_checkout
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import TaxError
-from saleor.product.models import ProductVariant
 from saleor.plugins.manager import get_plugins_manager
 from saleor.plugins.models import PluginConfiguration
+from saleor.product.models import ProductVariant
+
 from ..plugin import AvataxExcisePlugin
-from ..utils import (
-    AvataxConfiguration,
-    api_post_request,
-    get_metadata_key,
-    get_order_request_data,
-)
+from ..utils import (AvataxConfiguration, api_post_request, get_metadata_key,
+                     get_order_request_data)
 
 
 @patch("saleor.plugins.avatax.excise.plugin.api_get_request")
@@ -173,12 +169,8 @@ def test_calculate_checkout_line_total(
         get_metadata_key("itemized_taxes")
     )
 
-    sales_tax = checkout_with_item.metadata.get(
-        get_metadata_key("sales_tax")
-    )
-    other_tax = checkout_with_item.metadata.get(
-        get_metadata_key("other_tax")
-    )
+    sales_tax = checkout_with_item.metadata.get(get_metadata_key("sales_tax"))
+    other_tax = checkout_with_item.metadata.get(get_metadata_key("other_tax"))
 
     assert taxes_metadata is not None
     assert len(taxes_metadata) > 0
@@ -303,12 +295,8 @@ def test_calculate_checkout_shipping(
         get_metadata_key("itemized_taxes")
     )
 
-    sales_tax = checkout_with_item.metadata.get(
-        get_metadata_key("sales_tax")
-    )
-    other_tax = checkout_with_item.metadata.get(
-        get_metadata_key("other_tax")
-    )
+    sales_tax = checkout_with_item.metadata.get(get_metadata_key("sales_tax"))
+    other_tax = checkout_with_item.metadata.get(get_metadata_key("other_tax"))
 
     assert taxes_metadata is not None
     assert len(taxes_metadata) > 0
@@ -342,8 +330,7 @@ def test_calculate_checkout_total_invalid_checkout(
     checkout_info = fetch_checkout_info(checkout_with_item, [], [], manager)
     total = manager.calculate_checkout_total(checkout_info, [], [], [])
     assert total == TaxedMoney(
-        net=Money("0.00", "USD"),
-        gross=Money("0.00", "USD")
+        net=Money("0.00", "USD"), gross=Money("0.00", "USD")
     )
 
 
@@ -541,7 +528,7 @@ def test_api_post_request_handles_json_errors(product, monkeypatch):
     config = AvataxConfiguration(
         username_or_account="test",
         password_or_license="test",
-        use_sandbox=False
+        use_sandbox=False,
     )
     url = "https://www.avatax.api.com/some-get-path"
 
@@ -579,12 +566,10 @@ def test_order_created_calls_task(
 
     base_url = "https://excisesbx.avalara.com/"
     transaction_url = urljoin(
-        base_url,
-        "api/v1/AvaTaxExcise/transactions/create"
+        base_url, "api/v1/AvaTaxExcise/transactions/create"
     )
     commit_url = urljoin(
-        base_url,
-        "api/v1/AvaTaxExcise/transactions/{}/commit"
+        base_url, "api/v1/AvaTaxExcise/transactions/{}/commit"
     )
     data = get_order_request_data(order_with_lines)
     conf = {data["name"]: data["value"] for data in config.configuration}
@@ -602,7 +587,7 @@ def test_order_created_calls_task(
         asdict(data),
         configuration,
         order_with_lines.id,
-        commit_url
+        commit_url,
     )
 
 

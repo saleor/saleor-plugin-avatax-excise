@@ -1,16 +1,13 @@
-import pytest
+from dataclasses import asdict
 from decimal import Decimal
 from urllib.parse import urljoin
-from dataclasses import asdict
-from saleor.order import OrderEvents
-from ..utils import (
-    AvataxConfiguration,
-    get_api_url,
-    get_metadata_key,
-    get_order_request_data
-)
-from ..tasks import api_post_request_task
 
+import pytest
+from saleor.order import OrderEvents
+
+from ..tasks import api_post_request_task
+from ..utils import (AvataxConfiguration, get_api_url, get_metadata_key,
+                     get_order_request_data)
 
 config = AvataxConfiguration(
     username_or_account="test",
@@ -71,11 +68,11 @@ def test_api_post_request_task_with_invalid_productcodes(
         asdict(request_data),
         asdict(config),
         order_with_lines.id,
-        commit_url
+        commit_url,
     )
 
     assert response is None
-    msg = "Product \"FAKEPROD\" does not exist"
+    msg = 'Product "FAKEPROD" does not exist'
 
     assert order_with_lines.events.count() == 1
     event = order_with_lines.events.get()
@@ -133,7 +130,7 @@ def test_api_post_request_task_with_valid_productcodes(
         asdict(request_data),
         asdict(config),
         order_with_lines.id,
-        commit_url
+        commit_url,
     )
 
     expected_event_msg = (
@@ -150,12 +147,8 @@ def test_api_post_request_task_with_valid_productcodes(
         get_metadata_key("itemized_taxes")
     )
 
-    sales_tax = order_with_lines.metadata.get(
-        get_metadata_key("sales_tax")
-    )
-    other_tax = order_with_lines.metadata.get(
-        get_metadata_key("other_tax")
-    )
+    sales_tax = order_with_lines.metadata.get(get_metadata_key("sales_tax"))
+    other_tax = order_with_lines.metadata.get(get_metadata_key("other_tax"))
 
     assert taxes_metadata is not None
     assert len(taxes_metadata) > 0
@@ -163,13 +156,13 @@ def test_api_post_request_task_with_valid_productcodes(
     assert other_tax >= 0
 
 
-def test_api_post_request_task_order_doesnt_have_any_lines_with_taxes_to_calculate(
+def test_api_request_task_order_doesnt_have_any_lines_with_taxes_to_calculate(
     order_with_lines, shipping_zone, monkeypatch
 ):
     mock_api_post_request = {"error": {"message": "Wrong credentials"}}
     monkeypatch.setattr(
         "saleor.plugins.avatax.tasks.api_post_request",
-        lambda *_: mock_api_post_request
+        lambda *_: mock_api_post_request,
     )
 
     request_data = {}
