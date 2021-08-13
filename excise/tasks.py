@@ -51,7 +51,7 @@ def api_post_request_task(
     msg = ""
     if not tax_response:
         msg = (
-            "Empty response received from Excise API, " f"Order: {order.token}"
+            f"Empty response received from Excise API, order: {order.token}"
         )
         logger.warning(
             "Empty response received from Excise API, Order: %s", order.token
