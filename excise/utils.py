@@ -37,6 +37,11 @@ logger = logging.getLogger(__name__)
 TRANSACTION_TYPE = "DIRECT"
 SHIPPING_UNIT_OF_MEASURE = "EA"
 
+# The identifiers for tax types that we would need to group
+# for the tax breakdown
+SALES_TAX = "S"
+USE_TAX = "U"
+
 
 @dataclass
 class AvataxConfiguration:
@@ -607,14 +612,14 @@ def process_checkout_metadata(
 
 def get_sales_tax(taxes_data: Dict[str, Dict]) -> int:
     """
-    Build the sales tax amount where tax type is either "S" or "U"
+    Build the sales tax amount where tax type is either SALES_TAX or USE_TAX
     """
     return sum(
         map(
             lambda tax_data: tax_data.get("TaxAmount", 0),
             filter(
-                lambda tax_data: tax_data.get("TaxType") == "S"
-                or tax_data.get("TaxType") == "U",
+                lambda tax_data: tax_data.get("TaxType") == SALES_TAX
+                or tax_data.get("TaxType") == USE_TAX,
                 taxes_data.get("TransactionTaxes", []),
             ),
         )
@@ -623,15 +628,15 @@ def get_sales_tax(taxes_data: Dict[str, Dict]) -> int:
 
 def get_other_tax(taxes_data: Dict[str, Dict]) -> int:
     """
-    Building the remaining tax amount after getting the sales tax,
-    i.e. where the tax type is neither "S" nor "U"
+    Building the remaining tax amount after getting the total sales tax,
+    i.e. where the tax type is neither SALES_TAX nor USE_TAX
     """
     return sum(
         map(
             lambda tax_data: tax_data.get("TaxAmount", 0),
             filter(
-                lambda tax_data: tax_data.get("TaxType") != "S"
-                and tax_data.get("TaxType") != "U",
+                lambda tax_data: tax_data.get("TaxType") != SALES_TAX
+                and tax_data.get("TaxType") != USE_TAX,
                 taxes_data.get("TransactionTaxes", []),
             ),
         )
