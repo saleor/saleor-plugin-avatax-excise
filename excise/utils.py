@@ -191,6 +191,7 @@ def append_line_to_data(
     variant_channel_listing: "ProductVariantChannelListing",
     channel: "Channel",
     discounted: bool = False,
+    product_type: Optional["ProductType"] = None
 ):
     """
     Abstract line data regardless of Checkout or Order.
@@ -201,18 +202,18 @@ def append_line_to_data(
     ).first()
     warehouse_address = stock.warehouse.address if stock else None
 
-    unit_of_measure = (
-        variant.product.product_type.get_value_from_private_metadata(
-            get_metadata_key("UnitOfMeasure")
-        )
-    )
+    # ensure that if the product_type is provided, we use that
+    # otherwise fallback to getting it from varint instance
+    product_type = product_type or variant.product.product_type
+
     unit_quantity = variant.get_value_from_private_metadata(
         get_metadata_key("UnitQuantity")
     )
-    unit_quantity_of_measure = (
-        variant.product.product_type.get_value_from_private_metadata(
-            get_metadata_key("UnitQuantityUnitOfMeasure")
-        )
+    unit_of_measure = product_type.get_value_from_private_metadata(
+        get_metadata_key("UnitOfMeasure")
+    )
+    unit_quantity_of_measure = product_type.get_value_from_private_metadata(
+        get_metadata_key("UnitQuantityUnitOfMeasure")
     )
 
     origin_country_code = None
@@ -381,6 +382,7 @@ def get_checkout_lines_data(
             variant_channel_listing=line_info.channel_listing,
             channel=channel,
             discounted=discounted,
+            product_type=line_info.product_type
         )
 
     append_shipping_to_data(
@@ -429,7 +431,9 @@ def get_order_lines_data(
 
     data: List[TransactionLine] = []
 
-    lines = order.lines.prefetch_related("variant__channel_listings")
+    lines = order.lines.prefetch_related(
+        "variant__channel_listings", "variant__product__product_type"
+    )
 
     tax_included = Site.objects.get_current().settings.include_taxes_in_prices
     shipping_address = order.shipping_address
