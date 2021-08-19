@@ -1,11 +1,12 @@
 import pytest
-from django.db import connection
 from django.core.management.color import no_style
+from django.db import connection
+from saleor.account.models import Address
 from saleor.checkout.models import CheckoutLine
 from saleor.plugins.models import PluginConfiguration
-from saleor.warehouse.models import Warehouse
 from saleor.product.models import ProductType
-from saleor.account.models import Address
+from saleor.warehouse.models import Warehouse
+
 from ..plugin import AvataxExcisePlugin
 
 

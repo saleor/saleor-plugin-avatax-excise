@@ -14,17 +14,12 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from requests.auth import HTTPBasicAuth
-
 from saleor.checkout import base_calculations
 from saleor.checkout.models import Checkout
 from saleor.core.taxes import TaxError
 from saleor.order.utils import get_total_order_discount
+from saleor.plugins.avatax import CACHE_KEY, CACHE_TIME, taxes_need_new_fetch
 from saleor.shipping.models import ShippingMethodChannelListing
-from saleor.plugins.avatax import (
-    CACHE_KEY,
-    CACHE_TIME,
-    taxes_need_new_fetch,
-)
 
 if TYPE_CHECKING:
     # flake8: noqa
@@ -32,10 +27,8 @@ if TYPE_CHECKING:
     from saleor.channel.models import Channel
     from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
     from saleor.order.models import Order
-    from saleor.product.models import (
-        ProductVariant,
-        ProductVariantChannelListing,
-    )
+    from saleor.product.models import (ProductVariant,
+                                       ProductVariantChannelListing)
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +36,11 @@ logger = logging.getLogger(__name__)
 # Must be DIRECT for direct to consumer e-commerece
 TRANSACTION_TYPE = "DIRECT"
 SHIPPING_UNIT_OF_MEASURE = "EA"
+
+# The identifiers for tax types that we would need to group
+# for the tax breakdown
+SALES_TAX = "S"
+USE_TAX = "U"
 
 
 @dataclass
@@ -140,8 +138,7 @@ def api_post_request(
     response = None
     try:
         auth = HTTPBasicAuth(
-            config.username_or_account,
-            config.password_or_license
+            config.username_or_account, config.password_or_license
         )
         headers = {
             "x-company-id": config.company_name,
@@ -163,8 +160,7 @@ def api_post_request(
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
             logger.exception(
-                "Avatax Excise response contains errors %s",
-                json_response
+                "Avatax Excise response contains errors %s", json_response
             )
             return json_response
 
@@ -177,7 +173,8 @@ def api_post_request(
             content = response.content
         logger.exception(
             "Unable to decode the response from Avatax Excise. "
-            "Response: %s", content
+            "Response: %s",
+            content,
         )
         return {}
     return json_response  # type: ignore
@@ -194,6 +191,7 @@ def append_line_to_data(
     variant_channel_listing: "ProductVariantChannelListing",
     channel: "Channel",
     discounted: bool = False,
+    product_type: Optional["ProductType"] = None
 ):
     """
     Abstract line data regardless of Checkout or Order.
@@ -204,14 +202,19 @@ def append_line_to_data(
     ).first()
     warehouse_address = stock.warehouse.address if stock else None
 
-    unit_of_measure = variant.product.product_type.\
-        get_value_from_private_metadata(get_metadata_key("UnitOfMeasure"))
+    # ensure that if the product_type is provided, we use that
+    # otherwise fallback to getting it from varint instance
+    product_type = product_type or variant.product.product_type
+
     unit_quantity = variant.get_value_from_private_metadata(
-        get_metadata_key("UnitQuantity"))
-    unit_quantity_of_measure = variant.product.product_type.\
-        get_value_from_private_metadata(
-            get_metadata_key("UnitQuantityUnitOfMeasure")
-        )
+        get_metadata_key("UnitQuantity")
+    )
+    unit_of_measure = product_type.get_value_from_private_metadata(
+        get_metadata_key("UnitOfMeasure")
+    )
+    unit_quantity_of_measure = product_type.get_value_from_private_metadata(
+        get_metadata_key("UnitQuantityUnitOfMeasure")
+    )
 
     origin_country_code = None
     origin_jurisdiction = None
@@ -379,6 +382,7 @@ def get_checkout_lines_data(
             variant_channel_listing=line_info.channel_listing,
             channel=channel,
             discounted=discounted,
+            product_type=line_info.product_type
         )
 
     append_shipping_to_data(
@@ -416,7 +420,7 @@ def generate_request_data_from_checkout(
         lines=lines,
         invoice_number=invoice_number,
         user_tran_id=user_tran_id,
-        discount=discount_amount
+        discount=discount_amount,
     )
     return data
 
@@ -428,7 +432,7 @@ def get_order_lines_data(
     data: List[TransactionLine] = []
 
     lines = order.lines.prefetch_related(
-        "variant__channel_listings"
+        "variant__channel_listings", "variant__product__product_type"
     )
 
     tax_included = Site.objects.get_current().settings.include_taxes_in_prices
@@ -573,6 +577,22 @@ def metadata_requires_update(
     return False
 
 
+def build_metadata(taxes_data: Dict[str, Dict]):
+    """
+    Build the tax related metadata, add extra fields that we need as well
+    """
+    return {
+        get_metadata_key("itemized_taxes"): json.dumps(
+            taxes_data.get("TransactionTaxes")
+        ),
+        get_metadata_key("tax_transaction"): json.dumps(
+            taxes_data.get("Transaction")
+        ),
+        get_metadata_key("sales_tax"): get_sales_tax(taxes_data),
+        get_metadata_key("other_tax"): get_other_tax(taxes_data),
+    }
+
+
 def process_checkout_metadata(
     taxes_data: Dict[str, Dict],
     checkout: "Checkout",
@@ -585,17 +605,43 @@ def process_checkout_metadata(
     metadata_key = get_metadata_key("checkout_metadata_")
     data_cache_key = f"{metadata_key}{checkout.token}"
 
-    metadata = {
-        get_metadata_key("itemized_taxes"): json.dumps(
-            taxes_data.get("TransactionTaxes")
-        ),
-        get_metadata_key("tax_transaction"): json.dumps(
-            taxes_data.get("Transaction")
-        ),
-    }
+    metadata = build_metadata(taxes_data)
 
     if force_refresh or metadata_requires_update(metadata, data_cache_key):
         checkout.refresh_from_db()
         checkout.store_value_in_metadata(items=metadata)
         checkout.save()
         cache.set(data_cache_key, metadata, cache_time)
+
+
+def get_sales_tax(taxes_data: Dict[str, Dict]) -> int:
+    """
+    Build the sales tax amount where tax type is either SALES_TAX or USE_TAX
+    """
+    return sum(
+        map(
+            lambda tax_data: tax_data.get("TaxAmount", 0),
+            filter(
+                lambda tax_data: tax_data.get("TaxType") == SALES_TAX
+                or tax_data.get("TaxType") == USE_TAX,
+                taxes_data.get("TransactionTaxes", []),
+            ),
+        )
+    )
+
+
+def get_other_tax(taxes_data: Dict[str, Dict]) -> int:
+    """
+    Building the remaining tax amount after getting the total sales tax,
+    i.e. where the tax type is neither SALES_TAX nor USE_TAX
+    """
+    return sum(
+        map(
+            lambda tax_data: tax_data.get("TaxAmount", 0),
+            filter(
+                lambda tax_data: tax_data.get("TaxType") != SALES_TAX
+                and tax_data.get("TaxType") != USE_TAX,
+                taxes_data.get("TransactionTaxes", []),
+            ),
+        )
+    )

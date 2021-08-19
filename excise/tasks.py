@@ -1,18 +1,13 @@
-import json
 import logging
 
 import opentracing
 import opentracing.tags
-
 from saleor.celeryconf import app
 from saleor.core.taxes import TaxError
 from saleor.order.events import external_notification_event
 from saleor.order.models import Order
-from .utils import (
-    AvataxConfiguration,
-    api_post_request,
-    get_metadata_key,
-)
+
+from .utils import AvataxConfiguration, api_post_request, build_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +35,7 @@ def api_post_request_task(
             "sent to Avatax Excise."
         )
         external_notification_event(
-            order=order, user=None, message=msg, parameters=None
+            order=order, user=None, app=None, message=msg, parameters=None
         )
         return
 
@@ -56,23 +51,20 @@ def api_post_request_task(
     msg = ""
     if not tax_response:
         msg = (
-            "Empty response received from Excise API, "
-            f"Order: {order.token}"
+            f"Empty response received from Excise API, order: {order.token}"
         )
         logger.warning(
-            "Empty response received from Excise API, Order: %s",
-            order.token
+            "Empty response received from Excise API, Order: %s", order.token
         )
         external_notification_event(
-            order=order, user=None, message=msg, parameters=None
+            order=order, user=None, app=None, message=msg, parameters=None
         )
         return
     elif tax_response.get("ReturnCode", -1) != 0:
         errors = tax_response.get("TransactionErrors", [])
-        error_msg = ". ".join([
-            error.get("ErrorMessage", "")
-            for error in errors
-        ])
+        error_msg = ". ".join(
+            [error.get("ErrorMessage", "") for error in errors]
+        )
         msg = f"Unable to send order to Avatax Excise. {error_msg}"
         logger.warning(
             "Unable to send order %s to Avatax Excise. Response %s",
@@ -80,7 +72,7 @@ def api_post_request_task(
             tax_response,
         )
         external_notification_event(
-            order=order, user=None, message=msg, parameters=None
+            order=order, user=None, app=None, message=msg, parameters=None
         )
         return
     else:
@@ -94,13 +86,12 @@ def api_post_request_task(
                 config,
             )
             msg = f"Order committed to Avatax Excise. Order ID: {order.token}"
-            commit_status = commit_response.get("Status", '')
+            commit_status = commit_response.get("Status", "")
             if not commit_response or "Error" in commit_status:
                 errors = commit_response.get("TransactionErrors", [])
-                error_msg = ". ".join([
-                    error.get("ErrorMessage", "")
-                    for error in errors
-                ])
+                error_msg = ". ".join(
+                    [error.get("ErrorMessage", "") for error in errors]
+                )
                 msg = f"Unable to commit order to Avatax Excise. {error_msg}"
                 logger.warning(
                     "Unable to commit order %s to Avatax Excise. Response %s",
@@ -108,17 +99,10 @@ def api_post_request_task(
                     commit_response,
                 )
 
-    tax_metadata = {
-        get_metadata_key("itemized_taxes"): json.dumps(
-            tax_response.get("TransactionTaxes")
-        ),
-        get_metadata_key("tax_transaction"): json.dumps(
-            tax_response.get("Transaction")
-        ),
-    }
+    tax_metadata = build_metadata(tax_response)
     order.store_value_in_metadata(items=tax_metadata)
     order.save()
 
     external_notification_event(
-        order=order, user=None, message=msg, parameters=None
+        order=order, user=None, app=None, message=msg, parameters=None
     )

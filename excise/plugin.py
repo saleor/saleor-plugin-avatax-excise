@@ -1,49 +1,36 @@
 import logging
 from dataclasses import asdict
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Dict
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 from urllib.parse import urljoin
 
 import opentracing
 import opentracing.tags
 from django.core.exceptions import ValidationError
 from prices import Money, TaxedMoney
-
 from saleor.core.prices import quantize_price
-from saleor.core.taxes import (
-    TaxError,
-    zero_taxed_money,
-    charge_taxes_on_shipping
-)
+from saleor.core.taxes import (TaxError, charge_taxes_on_shipping,
+                               zero_taxed_money)
 from saleor.discount import DiscountInfo
+from saleor.plugins.avatax import (_validate_checkout, _validate_order,
+                                   api_get_request)
+from saleor.plugins.avatax.plugin import AvataxPlugin
 from saleor.plugins.base_plugin import ConfigurationTypeField
 from saleor.plugins.error_codes import PluginErrorCode
-from saleor.plugins.avatax import (
-    _validate_checkout,
-    _validate_order,
-    api_get_request
-)
-from saleor.plugins.avatax.plugin import AvataxPlugin
-from .utils import (
-    AvataxConfiguration,
-    api_post_request,
-    generate_request_data_from_checkout,
-    get_api_url,
-    get_checkout_tax_data,
-    get_order_request_data,
-    get_order_tax_data,
-    TRANSACTION_TYPE,
-    process_checkout_metadata,
-)
+
 from .tasks import api_post_request_task
+from .utils import (TRANSACTION_TYPE, AvataxConfiguration, api_post_request,
+                    generate_request_data_from_checkout, get_api_url,
+                    get_checkout_tax_data, get_order_request_data,
+                    get_order_tax_data, process_checkout_metadata)
 
 if TYPE_CHECKING:
     # flake8: noqa
     from saleor.account.models import Address
     from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
     from saleor.order.models import Order, OrderLine
-    from saleor.product.models import Product, ProductVariant
     from saleor.plugins.models import PluginConfiguration
+    from saleor.product.models import Product, ProductVariant
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +90,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         super(AvataxPlugin, self).__init__(*args, **kwargs)
         # Convert to dict to easier take config elements
         configuration = {
-            item["name"]: item["value"]
-            for item in self.configuration
+            item["name"]: item["value"] for item in self.configuration
         }
 
         self.config = AvataxConfiguration(
@@ -185,9 +171,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         )
         if not taxes_data or "Errors found" in taxes_data["Status"]:
             return previous_value
-        process_checkout_metadata(
-            taxes_data, checkout_info.checkout
-        )
+        process_checkout_metadata(taxes_data, checkout_info.checkout)
 
         checkout = checkout_info.checkout
         currency = checkout.currency
@@ -195,8 +179,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         net = checkout_total.net
         gross = net + tax
         taxed_total = quantize_price(
-            TaxedMoney(net=net, gross=gross),
-            currency
+            TaxedMoney(net=net, gross=gross), currency
         )
         total = self._append_prices_of_not_taxed_lines(
             taxed_total,
@@ -245,9 +228,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         )
         if not taxes_data or "error" in taxes_data:
             return previous_value
-        process_checkout_metadata(
-            taxes_data, checkout_info.checkout
-        )
+        process_checkout_metadata(taxes_data, checkout_info.checkout)
 
         tax_lines = taxes_data.get("TransactionTaxes", [])
         if not tax_lines:
@@ -284,7 +265,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
         transaction_url = urljoin(
             get_api_url(self.config.use_sandbox),
-            "AvaTaxExcise/transactions/create"
+            "AvaTaxExcise/transactions/create",
         )
         with opentracing.global_tracer().start_active_span(
             "avatax_excise.transactions.create"
@@ -368,9 +349,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         )
         if not taxes_data or "Errors found" in taxes_data["Status"]:
             return previous_value
-        process_checkout_metadata(
-            taxes_data, checkout_info.checkout
-        )
+        process_checkout_metadata(taxes_data, checkout_info.checkout)
         return self._calculate_line_total_price(
             taxes_data, checkout_line_info.line.id, previous_value
         )
@@ -407,12 +386,12 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
 
         tax = Decimal("0.00")
-        currency = ''
+        currency = ""
         for line in taxes_data.get("TransactionTaxes", []):
             if line.get("InvoiceLine") == line_id:
                 tax += Decimal(line.get("TaxAmount", "0.00"))
                 if not currency:
-                    currency = line.get('Currency')
+                    currency = line.get("Currency")
 
         if tax > 0 and currency:
             net = Decimal(previous_value.net.amount)
