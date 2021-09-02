@@ -608,7 +608,7 @@ def process_checkout_metadata(
     metadata = build_metadata(taxes_data)
 
     if force_refresh or metadata_requires_update(metadata, data_cache_key):
-        checkout.refresh_from_db()
+        checkout.refresh_from_db(fields=['metadata'])
         checkout.store_value_in_metadata(items=metadata)
         checkout.save()
         cache.set(data_cache_key, metadata, cache_time)
