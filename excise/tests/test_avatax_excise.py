@@ -159,8 +159,11 @@ def test_calculate_checkout_line_total(
         checkout_with_item.shipping_address,
         discounts,
     )
-    total = quantize_price(total, total.currency)
-    assert total == TaxedMoney(
+    price_with_discounts = total.price_with_discounts
+    price_with_discounts = quantize_price(
+        price_with_discounts, price_with_discounts.currency
+    )
+    assert price_with_discounts == TaxedMoney(
         net=Money(expected_net, "USD"), gross=Money(expected_gross, "USD")
     )
 

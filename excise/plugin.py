@@ -8,10 +8,13 @@ import opentracing
 import opentracing.tags
 from django.core.exceptions import ValidationError
 from prices import Money, TaxedMoney
+from saleor.checkout import base_calculations
+from saleor.checkout.interface import CheckoutTaxedPricesData
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import (TaxError, charge_taxes_on_shipping,
                                zero_taxed_money)
 from saleor.discount import DiscountInfo
+from saleor.order.interface import OrderTaxedPricesData
 from saleor.plugins.avatax import (_validate_checkout, _validate_order,
                                    api_get_request)
 from saleor.plugins.avatax.plugin import AvataxPlugin
@@ -27,6 +30,7 @@ from .utils import (TRANSACTION_TYPE, AvataxConfiguration, api_post_request,
 if TYPE_CHECKING:
     # flake8: noqa
     from saleor.account.models import Address
+    from saleor.channel.models import Channel
     from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
     from saleor.order.models import Order, OrderLine
     from saleor.plugins.models import PluginConfiguration
@@ -190,6 +194,26 @@ class AvataxExcisePlugin(AvataxPlugin):
 
         return max(total, zero_taxed_money(total.currency))
 
+    def _append_prices_of_not_taxed_lines(
+        self,
+        price: TaxedMoney,
+        lines: Iterable["CheckoutLineInfo"],
+        channel: "Channel",
+        discounts: Iterable[DiscountInfo],
+    ):
+        for line_info in lines:
+            if line_info.product.charge_taxes:
+                continue
+            prices_data = base_calculations.base_checkout_line_total(
+                line_info,
+                channel,
+                discounts,
+            )
+            price_with_discounts = prices_data.price_with_discounts
+            price.gross.amount += price_with_discounts.gross.amount
+            price.net.amount += price_with_discounts.net.amount
+        return price
+
     def _calculate_checkout_shipping(
         self, currency: str, lines: List[Dict], shipping_price: TaxedMoney
     ) -> TaxedMoney:
@@ -333,8 +357,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
-        previous_value: TaxedMoney,
-    ) -> TaxedMoney:
+        previous_value: CheckoutTaxedPricesData,
+    ) -> CheckoutTaxedPricesData:
         if self._skip_plugin(previous_value):
             return previous_value
 
@@ -350,9 +374,40 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not taxes_data or "Errors found" in taxes_data["Status"]:
             return previous_value
         process_checkout_metadata(taxes_data, checkout_info.checkout)
-        return self._calculate_line_total_price(
+        return self._calculate_checkout_line_total_price(
             taxes_data, checkout_line_info.line.id, previous_value
         )
+
+    @staticmethod
+    def _calculate_checkout_line_total_price(
+        taxes_data: Dict[str, Any],
+        line_id: str,
+        previous_value: CheckoutTaxedPricesData,
+    ) -> CheckoutTaxedPricesData:
+        if not taxes_data or "error" in taxes_data:
+            return previous_value
+
+        tax = Decimal("0.00")
+        currency = ""
+        for line in taxes_data.get("TransactionTaxes", []):
+            if line.get("InvoiceLine") == line_id:
+                tax += Decimal(line.get("TaxAmount", "0.00"))
+                if not currency:
+                    currency = line.get("Currency")
+
+        if tax > 0 and currency:
+            net = Decimal(previous_value.price_with_discounts.net.amount)
+
+            line_net = Money(amount=net, currency=currency)
+            line_gross = Money(amount=net + tax, currency=currency)
+            price_with_discounts = TaxedMoney(net=line_net, gross=line_gross)
+            return CheckoutTaxedPricesData(
+                price_with_discounts=price_with_discounts,
+                price_with_sale=price_with_discounts,
+                undiscounted_price=previous_value.undiscounted_price
+            )
+
+        return previous_value
 
     def calculate_order_line_total(
         self,
@@ -360,8 +415,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         order_line: "OrderLine",
         variant: "ProductVariant",
         product: "Product",
-        previous_value: TaxedMoney,
-    ) -> TaxedMoney:
+        previous_value: OrderTaxedPricesData,
+    ) -> OrderTaxedPricesData:
         if self._skip_plugin(previous_value):
             return previous_value
 
@@ -372,16 +427,16 @@ class AvataxExcisePlugin(AvataxPlugin):
             return zero_taxed_money(order.total.currency)
 
         taxes_data = self._get_order_tax_data(order, previous_value)
-        return self._calculate_line_total_price(
+        return self._calculate_order_line_total_price(
             taxes_data, order_line.id, previous_value
         )
 
     @staticmethod
-    def _calculate_line_total_price(
+    def _calculate_order_line_total_price(
         taxes_data: Dict[str, Any],
         line_id: str,
-        previous_value: TaxedMoney,
-    ):
+        previous_value: OrderTaxedPricesData,
+    ) -> OrderTaxedPricesData:
         if not taxes_data or "error" in taxes_data:
             return previous_value
 
@@ -398,7 +453,11 @@ class AvataxExcisePlugin(AvataxPlugin):
 
             line_net = Money(amount=net, currency=currency)
             line_gross = Money(amount=net + tax, currency=currency)
-            return TaxedMoney(net=line_net, gross=line_gross)
+            price_with_discounts = TaxedMoney(net=line_net, gross=line_gross)
+            return OrderTaxedPricesData(
+                price_with_discounts=price_with_discounts,
+                undiscounted_price=previous_value.undiscounted_price
+            )
 
         return previous_value
 
@@ -409,8 +468,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
-        previous_value: TaxedMoney,
-    ):
+        previous_value: CheckoutTaxedPricesData,
+    ) -> CheckoutTaxedPricesData:
         return previous_value
 
     def calculate_order_shipping(

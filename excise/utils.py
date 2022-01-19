@@ -369,10 +369,11 @@ def get_checkout_lines_data(
     if shipping_address is None:
         raise TaxError("Shipping address required for ATE tax calculation")
     for line_info in lines_info:
+        prices_data = base_calculations.base_checkout_line_total(
+            line_info, channel, discounts
+        )
         append_line_to_data(
-            amount=base_calculations.base_checkout_line_total(
-                line_info, channel, discounts
-            ).net.amount,
+            amount=prices_data.price_with_discounts.net.amount,
             data=data,
             line_id=line_info.line.id,
             quantity=line_info.line.quantity,
@@ -497,11 +498,11 @@ def get_cached_response_or_fetch(
     Fetch new data in other cases.
     """
     data_cache_key = CACHE_KEY + token_in_cache
-    if taxes_need_new_fetch(data, token_in_cache) or force_refresh:
+    cached_data = cache.get(data_cache_key)
+    if taxes_need_new_fetch(data, cached_data) or force_refresh:
         response = _fetch_new_taxes_data(data, data_cache_key, config)
     else:
-        _, response = cache.get(data_cache_key)
-
+        _, response = cached_data
     return response
 
 
