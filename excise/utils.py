@@ -294,13 +294,12 @@ def append_shipping_to_data(
     data: List[Dict],
     shipping_product_code: str,
     shipping_address: "Address",
-    shipping_method_channel_listings: Optional["ShippingMethodChannelListing"],
+    shipping_price_amount: Optional[Decimal],
 ):
     charge_taxes_on_shipping = (
         Site.objects.get_current().settings.charge_taxes_on_shipping
     )
-    if charge_taxes_on_shipping and shipping_method_channel_listings:
-        shipping_price = shipping_method_channel_listings.price
+    if charge_taxes_on_shipping and shipping_price_amount:
         data.append(
             TransactionLine(
                 InvoiceLine=None,
@@ -308,7 +307,7 @@ def append_shipping_to_data(
                 UnitPrice=None,
                 UnitOfMeasure=SHIPPING_UNIT_OF_MEASURE,
                 BilledUnits=None,
-                LineAmount=shipping_price.amount,
+                LineAmount=shipping_price_amount,
                 AlternateUnitPrice=None,
                 TaxIncluded=False,
                 UnitQuantity=None,
@@ -386,12 +385,14 @@ def get_checkout_lines_data(
             product_type=line_info.product_type
         )
 
-    append_shipping_to_data(
-        data,
-        config.shipping_product_code,
-        shipping_address,
-        checkout_info.shipping_method_channel_listings,
-    )
+    if checkout_info.delivery_method_info.delivery_method:
+        price = checkout_info.delivery_method_info.delivery_method.price
+        append_shipping_to_data(
+            data,
+            config.shipping_product_code,
+            shipping_address,
+            price.amount if price else None,
+        )
     return data
 
 
