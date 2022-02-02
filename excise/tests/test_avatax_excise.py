@@ -638,3 +638,56 @@ def test_order_created(
     order_with_lines.save()
 
     manager.order_created(order_with_lines)
+
+
+@pytest.mark.vcr
+@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+def test_calculate_order_line_unit(
+    order_line,
+    shipping_zone,
+    site_settings,
+    address_usa,
+    plugin_configuration,
+    cigar_product_type,
+    address_usa_va
+):
+    plugin_configuration()
+    manager = get_plugins_manager()
+
+    site_settings.company_address = address_usa_va
+    site_settings.save()
+
+    order_line.id = -1
+    order_line.unit_price = TaxedMoney(
+        net=Money("10.00", "USD"), gross=Money("10.00", "USD")
+    )
+    order_line.undiscounted_unit_price = TaxedMoney(
+        net=Money("10.00", "USD"), gross=Money("10.00", "USD")
+    )
+    order_line.save()
+
+    variant = order_line.variant
+    variant.sku = "202015500"
+    variant.save()
+
+    product = variant.product
+    product.product_type = cigar_product_type
+    product.save()
+
+    order = order_line.order
+    method = shipping_zone.shipping_methods.get()
+    order.shipping_address = address_usa_va
+    order.billing_address = address_usa_va
+    order.shipping_method_name = method.name
+    order.shipping_method = method
+    order.save()
+
+    line_price_data = manager.calculate_order_line_unit(
+        order, order_line, order_line.variant, order_line.variant.product
+    )
+
+    expected_line_price = TaxedMoney(
+        net=Money("10.00", "USD"), gross=Money("10.57", "USD")
+    )
+    assert line_price_data.price_with_discounts == expected_line_price
+

@@ -449,7 +449,7 @@ class AvataxExcisePlugin(AvataxPlugin):
                     currency = line.get("Currency")
 
         if tax > 0 and currency:
-            net = Decimal(previous_value.net.amount)
+            net = Decimal(previous_value.price_with_discounts.net.amount)
 
             line_net = Money(amount=net, currency=currency)
             line_gross = Money(amount=net + tax, currency=currency)
@@ -471,6 +471,32 @@ class AvataxExcisePlugin(AvataxPlugin):
         previous_value: CheckoutTaxedPricesData,
     ) -> CheckoutTaxedPricesData:
         return previous_value
+
+    def calculate_order_line_unit(
+        self,
+        order: "Order",
+        order_line: "OrderLine",
+        variant: "ProductVariant",
+        product: "Product",
+        previous_value: OrderTaxedPricesData,
+    ) -> OrderTaxedPricesData:
+        if not variant or (variant and not product.charge_taxes):
+            return previous_value
+
+        quantity = order_line.quantity
+        taxes_data = self._get_order_tax_data(order, previous_value)
+        default_total = OrderTaxedPricesData(
+            price_with_discounts=previous_value.price_with_discounts * quantity,
+            undiscounted_price=previous_value.undiscounted_price * quantity,
+        )
+        taxed_total_prices_data = self._calculate_order_line_total_price(
+            taxes_data, order_line.id, default_total
+        )
+        return OrderTaxedPricesData(
+            undiscounted_price=taxed_total_prices_data.undiscounted_price / quantity,
+            price_with_discounts=taxed_total_prices_data.price_with_discounts
+            / quantity,
+        )
 
     def calculate_order_shipping(
         self, order: "Order", previous_value: TaxedMoney
