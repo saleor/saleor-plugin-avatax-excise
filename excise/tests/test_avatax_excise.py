@@ -147,7 +147,7 @@ def test_calculate_checkout_line_total(
 
     discounts = [discount_info] if with_discount else None
 
-    lines = fetch_checkout_lines(checkout_with_item)
+    lines, _ = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(
         checkout_with_item, lines, discounts, manager
     )
@@ -249,7 +249,7 @@ def test_calculate_checkout_total(
         checkout_info, product_with_single_variant.variants.get()
     )
 
-    lines = fetch_checkout_lines(checkout_with_item)
+    lines, _ = fetch_checkout_lines(checkout_with_item)
     total = manager.calculate_checkout_total(
         checkout_info, lines, address_usa_va, discounts
     )
@@ -281,7 +281,7 @@ def test_calculate_checkout_shipping(
     checkout_with_item.shipping_address = address_usa_va
     checkout_with_item.shipping_method = shipping_zone.shipping_methods.get()
     checkout_with_item.save()
-    lines = fetch_checkout_lines(checkout_with_item)
+    lines, _ = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(
         checkout_with_item, lines, [discount_info], manager
     )
@@ -435,7 +435,7 @@ def test_calculate_checkout_total_excise_data(
     site_settings.include_taxes_in_prices = taxes_in_prices
     site_settings.save()
 
-    lines = fetch_checkout_lines(checkout)
+    lines, _ = fetch_checkout_lines(checkout)
     total = manager.calculate_checkout_total(
         checkout_info, lines, address_usa, []
     )
@@ -467,7 +467,7 @@ def test_preprocess_order_creation(
     checkout_with_item.shipping_method = shipping_zone.shipping_methods.get()
     checkout_with_item.save()
     discounts = [discount_info]
-    lines = fetch_checkout_lines(checkout_with_item)
+    lines, _ = fetch_checkout_lines(checkout_with_item)
     checkout_info = fetch_checkout_info(
         checkout_with_item, lines, discounts, manager
     )
@@ -495,7 +495,7 @@ def test_preprocess_order_creation_wrong_data(
     checkout_info = fetch_checkout_info(
         checkout_with_item, [], discounts, manager
     )
-    lines = fetch_checkout_lines(checkout_with_item)
+    lines, _ = fetch_checkout_lines(checkout_with_item)
 
     with pytest.raises(TaxError) as e:
         manager.preprocess_order_creation(checkout_info, discounts, lines)
