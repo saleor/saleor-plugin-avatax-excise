@@ -424,7 +424,11 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
 
         if not _validate_order(order):
-            return zero_taxed_money(order.total.currency)
+            zero_money = zero_taxed_money(order.currency)
+            return OrderTaxedPricesData(
+                price_with_discounts=zero_money,
+                undiscounted_price=zero_money
+            )
 
         taxes_data = self._get_order_tax_data(order, previous_value)
         return self._calculate_order_line_total_price(
