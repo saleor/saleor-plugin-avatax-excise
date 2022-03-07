@@ -541,7 +541,7 @@ def get_order_tax_data(
     data = get_order_request_data(order)
 
     response = get_cached_response_or_fetch(
-        data, "order_%s" % order.token, config, force_refresh
+        data, "order_%s" % order.id, config, force_refresh
     )
     if response.get("Status") != "Success":
         transaction_errors = response.get("TransactionErrors")
@@ -555,7 +555,7 @@ def get_order_tax_data(
                 logger.warning(
                     "Unable to calculate taxes for order %s, error_code: %s, "
                     "error_msg: %s",
-                    order.token,
+                    order.id,
                     error_code,
                     error_message,
                 )
