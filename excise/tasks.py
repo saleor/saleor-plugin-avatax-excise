@@ -51,10 +51,10 @@ def api_post_request_task(
     msg = ""
     if not tax_response:
         msg = (
-            f"Empty response received from Excise API, order: {order.token}"
+            f"Empty response received from Excise API, order: {order.id}"
         )
         logger.warning(
-            "Empty response received from Excise API, Order: %s", order.token
+            "Empty response received from Excise API, Order: %s", order.id
         )
         external_notification_event(
             order=order, user=None, app=None, message=msg, parameters=None
@@ -68,7 +68,7 @@ def api_post_request_task(
         msg = f"Unable to send order to Avatax Excise. {error_msg}"
         logger.warning(
             "Unable to send order %s to Avatax Excise. Response %s",
-            order.token,
+            order.id,
             tax_response,
         )
         external_notification_event(
@@ -76,7 +76,7 @@ def api_post_request_task(
         )
         return
     else:
-        msg = f"Order sent to Avatax Excise. Order ID: {order.token}"
+        msg = f"Order sent to Avatax Excise. Order ID: {order.id}"
         user_tran_id = tax_response.get("UserTranId")
         if config.autocommit and commit_url and user_tran_id:
             commit_url = commit_url.format(user_tran_id)
@@ -85,7 +85,7 @@ def api_post_request_task(
                 {},
                 config,
             )
-            msg = f"Order committed to Avatax Excise. Order ID: {order.token}"
+            msg = f"Order committed to Avatax Excise. Order ID: {order.id}"
             commit_status = commit_response.get("Status", "")
             if not commit_response or "Error" in commit_status:
                 errors = commit_response.get("TransactionErrors", [])
@@ -95,7 +95,7 @@ def api_post_request_task(
                 msg = f"Unable to commit order to Avatax Excise. {error_msg}"
                 logger.warning(
                     "Unable to commit order %s to Avatax Excise. Response %s",
-                    order.token,
+                    order.id,
                     commit_response,
                 )
 

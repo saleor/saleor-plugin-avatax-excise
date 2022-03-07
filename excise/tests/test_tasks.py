@@ -135,7 +135,7 @@ def test_api_post_request_task_with_valid_productcodes(
 
     expected_event_msg = (
         "Order committed to Avatax Excise. "
-        f"Order ID: {order_with_lines.token}"
+        f"Order ID: {order_with_lines.id}"
     )
     assert order_with_lines.events.count() == 1
     event = order_with_lines.events.get()
