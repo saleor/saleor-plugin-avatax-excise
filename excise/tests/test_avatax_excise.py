@@ -656,7 +656,6 @@ def test_calculate_order_line_unit(
 
     site_settings.company_address = address_usa_va
     site_settings.save()
-
     order_line.id = -1
     order_line.unit_price = TaxedMoney(
         net=Money("10.00", "USD"), gross=Money("10.00", "USD")

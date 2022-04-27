@@ -529,7 +529,7 @@ def get_order_request_data(order: "Order", config=AvataxConfiguration):
     data = generate_request_data(
         transaction_type=TRANSACTION_TYPE,
         lines=lines,
-        invoice_number=f"{order.pk}",
+        invoice_number=f"{order.number}",
         discount=discount_total.amount,
     )
     return data
