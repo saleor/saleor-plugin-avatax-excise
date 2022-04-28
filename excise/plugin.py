@@ -278,6 +278,7 @@ class AvataxExcisePlugin(AvataxPlugin):
         if self._skip_plugin(previous_value):
             return previous_value
 
+
         data = generate_request_data_from_checkout(
             checkout_info,
             lines_info=lines,
@@ -432,22 +433,30 @@ class AvataxExcisePlugin(AvataxPlugin):
 
         taxes_data = self._get_order_tax_data(order, previous_value)
         return self._calculate_order_line_total_price(
-            taxes_data, order_line.id, previous_value
+            taxes_data, order, order_line.id, previous_value
         )
 
     @staticmethod
     def _calculate_order_line_total_price(
         taxes_data: Dict[str, Any],
+        order: "Order",
         line_id: str,
         previous_value: OrderTaxedPricesData,
     ) -> OrderTaxedPricesData:
         if not taxes_data or "error" in taxes_data:
             return previous_value
+        
+        # lines order must be the same as used in request order data
+        line_ids_sequence = list(order.lines.order_by("created_at").values_list("id", flat=True))
+        if line_id not in line_ids_sequence:
+            return previous_value
+        
+        sequence_id = line_ids_sequence.index(line_id)
 
         tax = Decimal("0.00")
         currency = ""
         for line in taxes_data.get("TransactionTaxes", []):
-            if line.get("InvoiceLine") == line_id:
+            if line.get("InvoiceLine") == sequence_id:
                 tax += Decimal(line.get("TaxAmount", "0.00"))
                 if not currency:
                     currency = line.get("Currency")
@@ -494,7 +503,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             undiscounted_price=previous_value.undiscounted_price * quantity,
         )
         taxed_total_prices_data = self._calculate_order_line_total_price(
-            taxes_data, order_line.id, default_total
+            taxes_data, order, order_line.id, default_total
         )
         return OrderTaxedPricesData(
             undiscounted_price=taxed_total_prices_data.undiscounted_price / quantity,

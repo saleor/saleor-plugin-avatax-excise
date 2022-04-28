@@ -3,6 +3,7 @@ from dataclasses import asdict
 from decimal import Decimal
 from unittest.mock import Mock, patch
 from urllib.parse import urljoin
+import uuid
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -13,6 +14,7 @@ from saleor.checkout.fetch import fetch_checkout_info, fetch_checkout_lines
 from saleor.checkout.utils import add_variant_to_checkout
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import TaxError
+from saleor.order.models import OrderLine
 from saleor.plugins.manager import get_plugins_manager
 from saleor.plugins.models import PluginConfiguration
 from saleor.product.models import ProductVariant
@@ -656,7 +658,7 @@ def test_calculate_order_line_unit(
 
     site_settings.company_address = address_usa_va
     site_settings.save()
-    order_line.id = -1
+    order_line.id = uuid.uuid4()
     order_line.unit_price = TaxedMoney(
         net=Money("10.00", "USD"), gross=Money("10.00", "USD")
     )
@@ -690,3 +692,81 @@ def test_calculate_order_line_unit(
     )
     assert line_price_data.price_with_discounts == expected_line_price
 
+
+@pytest.mark.vcr
+@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+def test_calculate_order_line_unit_the_order_changed(
+    order_line,
+    shipping_zone,
+    site_settings,
+    address_usa,
+    plugin_configuration,
+    cigar_product_type,
+    address_usa_va
+):
+    """ Ensure that when the order order lines have changed the method will return
+    the correct value.
+    """
+    plugin_configuration()
+    manager = get_plugins_manager()
+
+    site_settings.company_address = address_usa_va
+    site_settings.save()
+
+    order_line.id = None
+    order_line.unit_price = TaxedMoney(
+        net=Money("10.00", "USD"), gross=Money("10.00", "USD")
+    )
+    order_line.undiscounted_unit_price = TaxedMoney(
+        net=Money("10.00", "USD"), gross=Money("10.00", "USD")
+    )
+    order_line.save()
+
+    variant = order_line.variant
+    variant.sku = "202015500"
+    variant.save()
+
+    product = variant.product
+    product.product_type = cigar_product_type
+    product.save()
+
+    order = order_line.order
+    method = shipping_zone.shipping_methods.get()
+    order.shipping_address = address_usa_va
+    order.billing_address = address_usa_va
+    order.shipping_method_name = method.name
+    order.shipping_method = method
+    order.save()
+
+    # calculating the order line unit for the first time
+    line_price_data = manager.calculate_order_line_unit(
+        order, order_line, order_line.variant, order_line.variant.product
+    )
+
+    expected_line_price = TaxedMoney(
+        net=Money("10.00", "USD"), gross=Money("10.57", "USD")
+    )
+    assert line_price_data.price_with_discounts == expected_line_price
+
+    # remove the first line add a new one
+    order.lines.first().delete()
+    second_order_line = order.lines.last()
+    second_order_line.id = None
+    # set different price than the first line
+    second_order_line.unit_price = TaxedMoney(
+        net=Money("25.00", "USD"), gross=Money("25.00", "USD")
+    )
+    second_order_line.undiscounted_unit_price = TaxedMoney(
+        net=Money("25.00", "USD"), gross=Money("25.00", "USD")
+    )
+    second_order_line.save()
+
+    # calculating the order line unit for the second time
+    line_price_data = manager.calculate_order_line_unit(
+        order, order_line, order_line.variant, order_line.variant.product
+    )
+    
+    expected_line_price = TaxedMoney(
+        net=Money("10.00", "USD"), gross=Money("10.57", "USD")
+    )
+    assert line_price_data.price_with_discounts == expected_line_price
