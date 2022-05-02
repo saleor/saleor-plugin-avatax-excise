@@ -1,8 +1,8 @@
 interactions:
 - request:
-    body: '{"EffectiveDate": "2021-07-06", "InvoiceDate": "2021-07-06", "TitleTransferCode":
+    body: '{"EffectiveDate": "2022-05-02", "InvoiceDate": "2022-05-02", "TitleTransferCode":
       "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 1,
-      "ProductCode": "123", "UnitPrice": "30.00", "UnitOfMeasure": null, "BilledUnits":
+      "ProductCode": "202015500", "UnitPrice": "30.00", "UnitOfMeasure": null, "BilledUnits":
       "3", "LineAmount": "30.00", "AlternateUnitPrice": "1.000", "TaxIncluded": false,
       "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null, "DestinationCountryCode":
       "USA", "DestinationJurisdiction": "VA", "DestinationAddress1": "1100 Congress
@@ -12,11 +12,11 @@ interactions:
       "", "SaleCity": "Richmond", "SalePostalCode": "23226", "Discounted": true, "OriginCountryCode":
       "USA", "OriginJurisdiction": "VA", "OriginCounty": "", "OriginCity": "Richmond",
       "OriginPostalCode": "23226", "OriginAddress1": "1100 Congress Ave", "OriginAddress2":
-      "", "UserData": "123", "CustomString1": null, "CustomString2": null, "CustomString3":
+      "", "UserData": "202015500", "CustomString1": null, "CustomString2": null, "CustomString3":
       null, "CustomNumeric1": null, "CustomNumeric2": null, "CustomNumeric3": null},
-      {"InvoiceLine": 2, "ProductCode": "202127000", "UnitPrice": "1.99", "UnitOfMeasure":
+      {"InvoiceLine": 2, "ProductCode": "202165300", "UnitPrice": "1.99", "UnitOfMeasure":
       null, "BilledUnits": "1", "LineAmount": "1.99", "AlternateUnitPrice": "1.000",
-      "TaxIncluded": false, "UnitQuantity": 1, "UnitQuantityUnitOfMeasure": null,
+      "TaxIncluded": false, "UnitQuantity": null, "UnitQuantityUnitOfMeasure": null,
       "DestinationCountryCode": "USA", "DestinationJurisdiction": "VA", "DestinationAddress1":
       "1100 Congress Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
       "Richmond", "DestinationPostalCode": "23226", "SaleCountryCode": "USA", "SaleAddress1":
@@ -24,7 +24,7 @@ interactions:
       "", "SaleCity": "Richmond", "SalePostalCode": "23226", "Discounted": true, "OriginCountryCode":
       "USA", "OriginJurisdiction": "VA", "OriginCounty": "", "OriginCity": "Richmond",
       "OriginPostalCode": "23226", "OriginAddress1": "1100 Congress Ave", "OriginAddress2":
-      "", "UserData": "202127000", "CustomString1": null, "CustomString2": null, "CustomString3":
+      "", "UserData": "202165300", "CustomString1": null, "CustomString2": null, "CustomString3":
       null, "CustomNumeric1": null, "CustomNumeric2": null, "CustomNumeric3": null},
       {"InvoiceLine": null, "ProductCode": "TAXFREIGHT", "UnitPrice": null, "UnitOfMeasure":
       "EA", "BilledUnits": null, "LineAmount": "10.000", "AlternateUnitPrice": null,
@@ -43,17 +43,17 @@ interactions:
       Accept:
       - '*/*'
       Accept-Encoding:
-      - gzip, deflate
+      - gzip, deflate, br
       Authorization:
       - Basic Og==
       Connection:
       - keep-alive
       Content-Length:
-      - '3251'
+      - '3266'
       Content-Type:
       - application/json
       User-Agent:
-      - python-requests/2.25.1
+      - python-requests/2.27.1
       x-company-id:
       - '1337'
     method: POST
@@ -61,34 +61,34 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAEAO1bW2/iOBh9H2n+Q5TngnLhOm9poDSzFFiS6c5qtQ+exNBIIWGdBBWN+t/Xdi7Y
-        uUEvq6VTRiO14hx/to/P589O6M/PnwRB/BZCZCHgG474RRD7ykruKINey+6pTqvTBU5r4NjD1mDo
-        9PqwP5R7XUW8og3zRh15IMuKKiUfmxGI4pDEMmPbhmGY0pcwipGvBw7EWMq1ggh4FnjUNkHsR/hz
-        ud3rH6KHwI7cwMcESAL+RQBB+Jn8KHGSIJT491XOMeE/MfRtSEcqX1W1nbo+5EHD3wWuDcuATrpA
-        +3QW4jdTEw/g1xi5oePSmAS9Z8FpYAOvyJjNZ2OGs0CBE9uRDiK4DtCe6NSWmCGDR9dfT+EOelRe
-        S7PY1hi29ls6Lmt+ren6nAGXOGaOat8LiBn/iFJQNybakoF14NmxB6jGmGL41CYLvl8Sg45WkbJ/
-        HP57DPzIjciM1MKM8qXHU+WR8SPcbEm/aZ8zps8RXEGEoFMBmcCDIW5+DULIBmeWAi+tH8JZvPkB
-        EWnOtCbZkDgVOvfAi6km2NxsB7g1QG5AHaWostztDsooHsEEBfGWsrr91NYcJbMmbzGi5QiGNnK3
-        ByMJJKugoLtrgAQcWmgJd8CPV9jAMYJIoJMWFgjPjF27GGvk2/vEqiN2mr4bzVd3EIS4OYG3wGan
-        iP1AUjOVl/NLkt9ZBmi6ZdyzLsyWOm16LSbI09Wrk1dpSl6lLnmVS/K+XfLK7zB5FUmRlT6e1K+e
-        wpPp9NxTWD2z+tuVX5PA1elr1iTupD5tCzvJ87JW6qgNGVucAnPSktWTM7YyLdW3LKo1KUN2SQFv
-        eThZ7o3lxJgZ2knJUXC/fg7m75yZ+XuFTfF5/tcN60z8LzdVrFr/43LXO3v/Y5H/TO2/NPTbu/ls
-        9G7t3z0z+88n5uLl9jetr2dif6n/MvvLg7O3v7kY64Y2LWSAoM8x8m7zoNeUB//DNeYDn4Ew0H9d
-        Esjt4fCN7yYf4CTUP7MU+OgnIUl5J1nwK52HBmeWBB/9PCTJ7yQJzvBURH4kPme9PEYoQJUvbupe
-        ytAWWe+twbArFrA7GIZgTeFFsKWu8NfCHLlr1xdcfxWgDTWKEIcEwOJhQvIJi+LfhOgwUMHDySWo
-        7WJv1N3pXP8AyMchxaasVRvlwIRUgWJTRiNGpSMXpYarEoauXc+br6bAwWOuMiGT4KnchWfHmKB5
-        EURYPVhgckd30pcHfccKCiyOQh5WJo82k4uDVBwrdAiFCMG+IBIqHnMutN9KoZkMV0h0qRQiY5TC
-        jfVbLhwRk7vjcKFuEHTXD1G2iXEtaxMOY4lDm3bsnNS0c/OR9qUhpGCihLh07YdNgO1bpiyCEG8A
-        2UAUVVF6FazKaSaQ5jgI56JM/YDPHYIe+GvyiaDtYD1fqQvnom2Aqr3DJPERARnmERWLMctSsowm
-        PRneMVEZaqWyDH66vOVGZY1ZToPQpKwdUZhQjkibRylrSqEmMQnhmIqEUykfAU7XjWGXBaNgg1J0
-        fhAVxKqiFMWqDVNWK0PdeozXqopRvVMlGCtWA16WJ8MbFCJnnBGIQFW9GLmhTSIcttl2v5vhTzmz
-        uRAqbMS6M/J/XAgrzmzPL4fcubFUDeUj1ZB76VeuhoXmXHErdnypbZfadqltl9p2qW3PqG3VJaBU
-        4aS2cqTCJXuFuYW2yz+bKTxE4i1/Er/iolpfPEs3s+cVT0v7frMcG5Nbi2OdWBMbb2Z5FS4z+Szl
-        qxy9D17q3KUwXQrTpTB9nMJkPrjbLffAsrouSXlZSn7JKsfh6/3Z5olHsNkCf588tFXV7C0eKQHk
-        e/7pg9J80xTHqxXEa7CDo+ThPC2WLanfknqWJH2h/3NyWoVOod7E0MNTLUogWm6EXUqK3QrmT5FH
-        Y9MS2TllL2nSNRoZy7FeYBCBaeLe4SDlbtI/WoDJ/Sz/WigD1JSRhLGEJD5emizG4aUEt4Ii++FL
-        /kJDqHnVkKNmECMbmvswghsOwCu9cSPmLznADuabhqjtAHnBU9aSvhdJF5Kfc2Y8zOoklktOQcwA
-        D8P7/OnpX62NtwmbMgAA
+        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
+        ffc+f3r5F3ERqbKXMwAA
     headers:
       Cache-Control:
       - no-store, no-cache
@@ -108,7 +108,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Tue, 06 Jul 2021 21:50:42 GMT
+      - Mon, 02 May 2022 07:25:57 GMT
       Feature-Policy:
       - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
         'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
@@ -117,10 +117,14 @@ interactions:
       - strict-origin-when-cross-origin
       Server:
       - ''
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
       X-Content-Type-Options:
       - nosniff
       X-Frame-Options:
       - sameorigin
+      X-Permitted-Cross-Domain-Policies:
+      - none
       X-XSS-Protection:
       - 1; mode=block
     status:

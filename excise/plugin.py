@@ -375,22 +375,28 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
         process_checkout_metadata(taxes_data, checkout_info.checkout)
         return self._calculate_checkout_line_total_price(
-            taxes_data, checkout_line_info.line.id, previous_value
+            taxes_data, lines, checkout_line_info.line.id, previous_value
         )
 
     @staticmethod
     def _calculate_checkout_line_total_price(
         taxes_data: Dict[str, Any],
+        lines: Iterable["CheckoutLineInfo"],
         line_id: str,
         previous_value: CheckoutTaxedPricesData,
     ) -> CheckoutTaxedPricesData:
         if not taxes_data or "error" in taxes_data:
             return previous_value
 
+        line_id_to_seq_number = {line_info.line.id: n +1 for n, line_info in enumerate(lines)}
+        sequence_id = line_id_to_seq_number.get(line_id)
+        if sequence_id is None:
+            return previous_value
+
         tax = Decimal("0.00")
         currency = ""
         for line in taxes_data.get("TransactionTaxes", []):
-            if line.get("InvoiceLine") == line_id:
+            if line.get("InvoiceLine") == sequence_id:
                 tax += Decimal(line.get("TaxAmount", "0.00"))
                 if not currency:
                     currency = line.get("Currency")
