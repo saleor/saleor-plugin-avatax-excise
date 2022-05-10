@@ -433,7 +433,7 @@ def get_order_lines_data(
 
     data: List[TransactionLine] = []
 
-    lines = order.lines.prefetch_related(
+    lines = order.lines.order_by("created_at").prefetch_related(
         "variant__channel_listings", "variant__product__product_type"
     )
 
@@ -442,7 +442,7 @@ def get_order_lines_data(
     if shipping_address is None:
         raise TaxError("Shipping address required for ATE tax calculation")
 
-    for line in lines:
+    for sequence_number, line in enumerate(lines):
         variant = line.variant
         if variant is None:
             continue
@@ -451,9 +451,12 @@ def get_order_lines_data(
             channel_id=order.channel_id
         )
 
+        # plugin requires int as invoice number - the line id was used for that
+        # as order line id changes to `uuid` cannot be used anymore
+        # the index of element in queryset is used instead
         append_line_to_data(
             data=data,
-            line_id=line.id,
+            line_id=sequence_number,
             quantity=line.quantity,
             amount=line.unit_price_net_amount * line.quantity,
             tax_included=tax_included,
