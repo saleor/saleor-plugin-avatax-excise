@@ -216,13 +216,6 @@ def test_calculate_checkout_total(
     non_default_category,
 ):
     plugin_configuration()
-    # Required ATE variant data
-    metadata = {
-        get_metadata_key("UnitQuantity"): 1,
-    }
-    ProductVariant.objects.filter(sku="SKU_SINGLE_VARIANT").update(
-        sku="202127000", private_metadata=metadata
-    )
     monkeypatch.setattr(
         "saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin._skip_plugin",
         lambda *_: False,
@@ -230,6 +223,11 @@ def test_calculate_checkout_total(
     manager = get_plugins_manager()
     checkout_with_item.shipping_address = address_usa_va
     checkout_with_item.save()
+
+    checkout_variant = checkout_with_item.lines.first().variant
+    checkout_variant.sku = "202015500"
+    checkout_variant.save(update_fields=["sku"])
+
     site_settings.company_address = address_usa
     site_settings.include_taxes_in_prices = taxes_in_prices
     site_settings.save()
@@ -242,6 +240,11 @@ def test_calculate_checkout_total(
     product_with_single_variant.charge_taxes = False
     product_with_single_variant.category = non_default_category
     product_with_single_variant.save()
+
+    variant = product_with_single_variant.variants.first()
+    variant.sku = "202165300"
+    variant.save(update_fields=["sku"])
+
     discounts = [discount_info] if with_discount else None
     checkout_info = fetch_checkout_info(
         checkout_with_item, [], discounts, manager

@@ -367,14 +367,20 @@ def get_checkout_lines_data(
     shipping_address = checkout_info.shipping_address
     if shipping_address is None:
         raise TaxError("Shipping address required for ATE tax calculation")
-    for line_info in lines_info:
+    for sequence_number, line_info in enumerate(lines_info):
         prices_data = base_calculations.base_checkout_line_total(
             line_info, channel, discounts
         )
+
+        # plugin requires int as invoice number - the line id was used for that
+        # as order line id changes to `uuid` cannot be used anymore
+        # the index of element + 1 in queryset is used instead;
+        # the index value is increased be 1, as the line id 0 is
+        # reserved for shipping
         append_line_to_data(
             amount=prices_data.price_with_discounts.net.amount,
             data=data,
-            line_id=line_info.line.id,
+            line_id=sequence_number + 1,
             quantity=line_info.line.quantity,
             shipping_address=shipping_address,
             tax_included=tax_included,
