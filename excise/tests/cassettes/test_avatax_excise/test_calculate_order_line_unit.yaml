@@ -1,7 +1,7 @@
 interactions:
 - request:
     body: '{"EffectiveDate": "2022-05-13", "InvoiceDate": "2022-05-13", "TitleTransferCode":
-      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": 27,
+      "DEST", "TransactionType": "DIRECT", "TransactionLines": [{"InvoiceLine": -1,
       "ProductCode": "202015500", "UnitPrice": "30.000", "UnitOfMeasure": "PAC", "BilledUnits":
       "3", "LineAmount": "30.000", "AlternateUnitPrice": "1.000", "TaxIncluded": true,
       "UnitQuantity": null, "UnitQuantityUnitOfMeasure": "EA", "DestinationCountryCode":
@@ -14,7 +14,19 @@ interactions:
       "OriginCity": null, "OriginPostalCode": null, "OriginAddress1": null, "OriginAddress2":
       null, "UserData": "202015500", "CustomString1": null, "CustomString2": null,
       "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2": null, "CustomNumeric3":
-      null}], "InvoiceNumber": "24", "Discount": "0", "UserTranId": null}'
+      null}, {"InvoiceLine": 4, "ProductCode": "202015500", "UnitPrice": "30.000",
+      "UnitOfMeasure": "PAC", "BilledUnits": "3", "LineAmount": "30.000", "AlternateUnitPrice":
+      "1.000", "TaxIncluded": true, "UnitQuantity": null, "UnitQuantityUnitOfMeasure":
+      "EA", "DestinationCountryCode": "USA", "DestinationJurisdiction": "VA", "DestinationAddress1":
+      "1100 Congress Ave", "DestinationAddress2": "", "DestinationCounty": "", "DestinationCity":
+      "Richmond", "DestinationPostalCode": "23226", "SaleCountryCode": "USA", "SaleAddress1":
+      "1100 Congress Ave", "SaleAddress2": "", "SaleJurisdiction": "VA", "SaleCounty":
+      "", "SaleCity": "Richmond", "SalePostalCode": "23226", "Discounted": false,
+      "OriginCountryCode": null, "OriginJurisdiction": null, "OriginCounty": null,
+      "OriginCity": null, "OriginPostalCode": null, "OriginAddress1": null, "OriginAddress2":
+      null, "UserData": "202015500", "CustomString1": null, "CustomString2": null,
+      "CustomString3": null, "CustomNumeric1": null, "CustomNumeric2": null, "CustomNumeric3":
+      null}], "InvoiceNumber": "4", "Discount": "0", "UserTranId": null}'
     headers:
       Accept:
       - '*/*'
@@ -25,7 +37,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '1212'
+      - '2222'
       Content-Type:
       - application/json
       User-Agent:
@@ -37,28 +49,29 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAEAN1YTW/bOBC9F+h/EHSODUq247Q3RVZTdR3baynZFoseGIl2CciSl5KMGEX+e4fU
-        F/VhOZu9uAsEcKD3OJx5nBmO9PP9O0VRH2LCXIZD21c/KupmjMfT6bU/uPmg+YPxkz4ZfPARGow3
-        TxtvSqb+5HqsXomF5aKxPtV0NM6eOglO0pibclLPI3Gcs9ckSVloRj4BDOUWogQHLn42dlEaJvBc
-        G05RZTzGXkKjEAiEG/ybA4ryM/tpcTIjgvj9quQ45J+UhB4RjmpXXWvnNCR10A4PEfVIDujTCjH5
-        HuyYh6E+OIZagV9SRmOfCqMcfZTBeeThoMmYaBJjxSI/9RITJ2QbsSOXaYgkj/EzDbdzciCBUNeV
-        rQPoHvfCJ0d6vAZbxfO7xnMnfUpyaLFcWBJq4sBLAyx0BYYdisxY1bfjJjIXxyOE6n7+meIwoUlX
-        CNJR63oNsZ7Jbs/3zPdbSPs5OCAxcG5xTEoL+s2wvvMcziyMySLdPRHGTUgWeJZnKUj8RxykIm4d
-        6UibTBBqSDMjscfovjpHBdR2LcU1vioD5dFe39kLW5bfTBmDLDtmOTGTPQeVeZbnQZkyJCqlSCXD
-        dO1H+RQKEfOVtxJkCQBCKharGfRy9Z9LRL+0Ermeotr5/LsqMW33QqpEQ2+pEjTUb36fKgG1v+VF
-        srbNz/fLxex/WSSjSyuS5Z2zenuROO6XCykSNH1jkaDfp0iclWXaxrxRJ4q5BOQCq4X/fG/NZBZj
-        Eescyk4NXGJFYRymy4nawO5hVsRbAa+ivUiacKssGd3SUKHhJmI7kUdKGnMAhAVC9kRG4T8lqRxV
-        Aig+GDaau4nkz3X4C7MQTKq9Vd0rBxByBZpLJY0klYCXBebsiUfr9dzoPECVQn0Vv68n9XUlwG5p
-        ECw3c+yDHl3JL/WW/ChN+85Y1whGkBAG7pIGs6NE+I4BCX03anBrlIeQJisGLvPWy7sEarpMfM7h
-        SoyGqLl0ubknOE5ZllrGH93OdjDNlhdFAbXIlvn5JBm2aPONGp2fRdmM2iF+YoRufyRF+60tPdkn
-        yhzru2tKUt+dU7d0bLmQg1mXVtfU+7GLoLLalFUUQ98q82Gk69cdrM4wM8igbB+x7iyRquRMxBLz
-        TNhNm+3YZUafABLvnAoStVMKCTd8n0Hb1DhHgwlTMaNwy58oxoGcWaT3Gu4Rmt+gZxTmlDPSllba
-        mgqoT0xOOKci53TKx4HX6yax24IJsEcpER9hDbG6KE2xTpppq1Wg9DRW16qL0d1aMkwWqwdvy1Pg
-        PQrxWWqGE3z6fpjR2ON2pGkPFfBL9k9x+VVfpIruCS7s9jg8ZsPIaFTcdfwS49+m8gGg7JqqtdkQ
-        OIQDmWUzKXdKH6DJQBu5CH0UfyU5v0ire1IfN7HXmPmUkkAevMpoaAIpzO/yDSknp5nluKocb/Hi
-        kh/gzF5bZoPB1RdVfQ9G2tvkH+HEqFJ+gKsBJ+6YjLEm3D7MC4WNak6vHa8qP3zLB8dTo3eJOlHK
-        POIc44TsagBkwY4m0pdJfCBlR1GNA+bvPG0txatCfpD1mIukrNIxe6uUHKzce//u5RfOB36IahUA
-        AA==
+        H4sIAAAAAAAEAO1aXW/aSBR9r9T/YPk5oLGBhPbNMTR1lwCLnWyr1T4M9oVaMjY7tlFQlf/emfEH
+        40+yqVaFFikSkc+ZO/eeuXfueORvb99IkvwQArEI9g1Hfi/JyxsY4ncKdIZ4CZ3+ACkdjKDXGThD
+        1EfL62HPtuUrPjAf1FdvlL6CkqdmhKM4ZKbM2LYhDFP2AqKY+HrgAMVSrhVE2LPwk7YJYj+iz3vd
+        PjoYD7EduYFPCcAM/s0ASfqW/FQ4iRFO/Ocq55jwbwy+DdxR5apu7MT1oQga/i5wbUiBjoDobA6y
+        T8OQH0xNPoCfYuKGjsuNMvRRBCeBjb0yY6AIjDkJnNiOdBzBOiB7JlMXCR7jJ9dfT2AHHlfXEq1T
+        0NpvuU+m8HhBbWXP70rPzXgZpdB0Nh0LqI49O/Yw15UyDJ9nxrw4HTORuNjvIVT0888Y+5Eb1YWQ
+        L7XSVdUCMn6CzZbNmc43FeYzsQch5dziEHIL6rBbnHlC18wPYRpvlkCYCcECy/IkBcF5xF7M41aR
+        ipTBAKGSNCMIbeJuD+soUbWtsWRpn6WO9Ggs7oypIcqvx4TQLNsnOTESPacqsyxPg9JFiFdKlkqa
+        bhmP4ipkIqYjbwVozAEaUjZYTqDnqx8uEfXUSuT6BhXW579ViW5YJ1IlCnpNlaCuOjyfKqFqf0mL
+        ZGHoH+9n09EvWSS9UyuS2Z05f32RmNanEykSdPPKIkHnUyTmfKwb2qRUJ5I+o8gvWS39tmpRm6ql
+        /78Vy+XQdS6V8rscugYnViGXM9f5FMnvcua6PrEauRy5zqdGzuzIxX6SMhBTfUxIQGrvwZruuPiI
+        zHhn+G4gl7B7CEO85vA82PKk8dfSjLhr15dcfxWQDc8jKQ4ZQIWlhOSJiNL/pOjgqOTR2qNHjfJs
+        PPlTHf7CxKcm5baiVpr2jqYLi58ar/rD8aqty08JqQLloUJOCCpRXhKYuQXbLe5fpY2WUoVQX8Rv
+        e+1te/Gl2K3rebPVBDtUj7piF/bSdCl1405bFAiaFwGh7kKJWbMlsBk98B0rKHELlAffjeaEusze
+        7tmuiMoug8M4TIleF5WHzlb3gMOYJKml/VHvbA1Tr3iRbRgV8lj/2EimU1T5WoHO1uJwz14J8QMB
+        d/01ytpNYWjjvpjnWFtvzUltPbZoaV9xIQWTriQvXPvrJqCVVaXMg5Du03k+9FT1uoZVG2YCaS7Z
+        BqQ+S4QqORKxwDwSdtlmNXaR0SaAwDumgkCtlULANcchdNtUGEehB2pJD/w1eyJpOzgySG013CI0
+        OzEcUZhRjkibW6lqyqE2MRnhmIqMUysfA16um8CuCsbBFqV4fEBKYtVRymI1mqmqlaFuM1bUqo5R
+        v7UkmChWC16VJ8NbFGJnxxGOcHN/GLmhzewIp1uUwc858ad1VlWEm15vLo310lgvjfXSWC+N9dJY
+        BeyEG2vyT9b7Dl8TZbsndWGzxf4+udXo9W6y57TdsO+K0jfrfNeUx6sV0EXYwSi53GJOqR006Cg9
+        C6H3/C8np3300Cf7ZeglVj7E4IkXOHkwbkQzmHXyFeQ3EqOxacliuNn9Z7p+I2Mx1ksMJj4v6ntq
+        pDpN+v0UJN2zj6pAQ4tJGAtg9ulxIbNxuO8rrK4sPnzNt2JSwxVejppBTGww92EEmwJAk2DjRsJH
+        ZXgH+YYiazvM7k6rWvIrx3QhizFnOXnIxuSIJzh4cO/tm+fvjzMpYCUnAAA=
     headers:
       Cache-Control:
       - no-store, no-cache
@@ -67,7 +80,7 @@ interactions:
       Content-Encoding:
       - gzip
       Content-Length:
-      - '1198'
+      - '1298'
       Content-Security-Policy:
       - 'default-src ''self''; font-src ''self'' use.typekit.net fonts.gstatic.com
         data: ; img-src ''self'' p.typekit.net *.walkme.com *.cloudfront.net data:
@@ -78,7 +91,7 @@ interactions:
       Content-Type:
       - application/json; charset=utf-8
       Date:
-      - Fri, 13 May 2022 12:21:11 GMT
+      - Fri, 13 May 2022 13:58:52 GMT
       Feature-Policy:
       - geolocation 'none'; midi 'none'; notifications 'none'; push 'none'; sync-xhr
         'self'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none';
