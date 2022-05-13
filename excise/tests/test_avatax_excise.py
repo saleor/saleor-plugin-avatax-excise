@@ -646,7 +646,9 @@ def test_order_created(
 
 
 @pytest.mark.vcr
-@override_settings(PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"])
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
 def test_calculate_order_line_unit(
     order_line,
     shipping_zone,
@@ -662,12 +664,13 @@ def test_calculate_order_line_unit(
     site_settings.company_address = address_usa_va
     site_settings.save()
     order_line.id = uuid.uuid4()
-    order_line.unit_price = TaxedMoney(
+    unit_price = TaxedMoney(
         net=Money("10.00", "USD"), gross=Money("10.00", "USD")
     )
-    order_line.undiscounted_unit_price = TaxedMoney(
-        net=Money("10.00", "USD"), gross=Money("10.00", "USD")
-    )
+    order_line.unit_price = unit_price
+    order_line.base_unit_price = unit_price.gross
+    order_line.undiscounted_unit_price = unit_price
+    order_line.undiscounted_base_unit_price = unit_price.gross
     order_line.save()
 
     variant = order_line.variant
@@ -717,12 +720,13 @@ def test_calculate_order_line_unit_the_order_changed(
     site_settings.save()
 
     order_line.id = None
-    order_line.unit_price = TaxedMoney(
+    unit_price = TaxedMoney(
         net=Money("10.00", "USD"), gross=Money("10.00", "USD")
     )
-    order_line.undiscounted_unit_price = TaxedMoney(
-        net=Money("10.00", "USD"), gross=Money("10.00", "USD")
-    )
+    order_line.unit_price = unit_price
+    order_line.base_unit_price = unit_price.gross
+    order_line.undiscounted_unit_price = unit_price
+    order_line.undiscounted_base_unit_price = unit_price.gross
     order_line.save()
 
     variant = order_line.variant
