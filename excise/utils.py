@@ -197,8 +197,8 @@ def append_line_to_data(
     Abstract line data regardless of Checkout or Order.
     """
 
-    stock = variant.stocks.for_country_and_channel(
-        shipping_address.country, channel.slug
+    stock = variant.stocks.for_channel_and_country(
+        channel.slug, shipping_address.country
     ).first()
     warehouse_address = stock.warehouse.address if stock else None
 
