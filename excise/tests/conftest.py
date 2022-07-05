@@ -74,7 +74,7 @@ def cigar_product_type():
 
 
 @pytest.fixture
-def warehouse(address_usa_va, shipping_zone):
+def warehouse(address_usa_va, shipping_zone, channel_USD):
     warehouse = Warehouse.objects.create(
         address=address_usa_va,
         name="Example Warehouse",
@@ -82,6 +82,7 @@ def warehouse(address_usa_va, shipping_zone):
         email="test@example.com",
     )
     warehouse.shipping_zones.add(shipping_zone)
+    warehouse.channels.add(channel_USD)
     warehouse.save()
     return warehouse
 
