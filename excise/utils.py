@@ -368,7 +368,7 @@ def get_checkout_lines_data(
     if shipping_address is None:
         raise TaxError("Shipping address required for ATE tax calculation")
     for sequence_number, line_info in enumerate(lines_info):
-        prices_data = base_calculations.base_checkout_line_total(
+        prices_data = base_calculations.calculate_base_line_total_price(
             line_info, channel, discounts
         )
 
@@ -378,7 +378,7 @@ def get_checkout_lines_data(
         # the index value is increased be 1, as the line id 0 is
         # reserved for shipping
         append_line_to_data(
-            amount=prices_data.price_with_discounts.net.amount,
+            amount=prices_data.amount,
             data=data,
             line_id=sequence_number + 1,
             quantity=line_info.line.quantity,
