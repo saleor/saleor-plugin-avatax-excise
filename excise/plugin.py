@@ -9,7 +9,6 @@ import opentracing.tags
 from django.core.exceptions import ValidationError
 from prices import Money, TaxedMoney
 from saleor.checkout import base_calculations
-from saleor.checkout.interface import CheckoutTaxedPricesData
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import (TaxError, charge_taxes_on_shipping,
                                zero_taxed_money)
@@ -204,14 +203,13 @@ class AvataxExcisePlugin(AvataxPlugin):
         for line_info in lines:
             if line_info.product.charge_taxes:
                 continue
-            prices_data = base_calculations.base_checkout_line_total(
+            prices_data = base_calculations.calculate_base_line_total_price(
                 line_info,
                 channel,
                 discounts,
             )
-            price_with_discounts = prices_data.price_with_discounts
-            price.gross.amount += price_with_discounts.gross.amount
-            price.net.amount += price_with_discounts.net.amount
+            price.gross.amount += prices_data.amount
+            price.net.amount += prices_data.amount
         return price
 
     def _calculate_checkout_shipping(
@@ -358,8 +356,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
-        previous_value: CheckoutTaxedPricesData,
-    ) -> CheckoutTaxedPricesData:
+        previous_value: TaxedMoney,
+    ) -> TaxedMoney:
         if self._skip_plugin(previous_value):
             return previous_value
 
@@ -384,8 +382,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         taxes_data: Dict[str, Any],
         lines: Iterable["CheckoutLineInfo"],
         line_id: str,
-        previous_value: CheckoutTaxedPricesData,
-    ) -> CheckoutTaxedPricesData:
+        previous_value: TaxedMoney,
+    ) -> TaxedMoney:
         if not taxes_data or "error" in taxes_data:
             return previous_value
 
@@ -403,16 +401,11 @@ class AvataxExcisePlugin(AvataxPlugin):
                     currency = line.get("Currency")
 
         if tax > 0 and currency:
-            net = Decimal(previous_value.price_with_discounts.net.amount)
+            net = Decimal(previous_value.net.amount)
 
             line_net = Money(amount=net, currency=currency)
             line_gross = Money(amount=net + tax, currency=currency)
-            price_with_discounts = TaxedMoney(net=line_net, gross=line_gross)
-            return CheckoutTaxedPricesData(
-                price_with_discounts=price_with_discounts,
-                price_with_sale=price_with_discounts,
-                undiscounted_price=previous_value.undiscounted_price
-            )
+            return TaxedMoney(net=line_net, gross=line_gross)
 
         return previous_value
 
@@ -487,8 +480,8 @@ class AvataxExcisePlugin(AvataxPlugin):
         checkout_line_info: "CheckoutLineInfo",
         address: Optional["Address"],
         discounts: Iterable["DiscountInfo"],
-        previous_value: CheckoutTaxedPricesData,
-    ) -> CheckoutTaxedPricesData:
+        previous_value: TaxedMoney,
+    ) -> TaxedMoney:
         return previous_value
 
     def calculate_order_line_unit(
