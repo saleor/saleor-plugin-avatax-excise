@@ -11,8 +11,9 @@ from prices import Money, TaxedMoney
 from saleor.checkout import base_calculations
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import (TaxError, charge_taxes_on_shipping,
-                               zero_taxed_money)
-from saleor.discount import DiscountInfo
+                               zero_taxed_money, zero_money)
+from saleor.discount import DiscountInfo, OrderDiscountType
+from saleor.order import base_calculations as base_order_calculations
 from saleor.order.interface import OrderTaxedPricesData
 from saleor.plugins.avatax import (_validate_checkout, _validate_order,
                                    api_get_request)
@@ -530,6 +531,56 @@ class AvataxExcisePlugin(AvataxPlugin):
         currency = order.currency
         return self._calculate_checkout_shipping(
             currency, tax_lines, previous_value
+        )
+
+    def calculate_order_total(
+        self,
+        order: "Order",
+        lines: Iterable["OrderLine"],
+        previous_value: TaxedMoney,
+    ) -> TaxedMoney:
+        if self._skip_plugin(previous_value):
+            return previous_value
+        order_total = previous_value
+        if not _validate_order(order):
+            return order_total
+
+        taxes_data = get_order_tax_data(order, self.config, False)
+
+        currency = order.currency
+        taxed_subtotal = zero_taxed_money(currency)
+
+        for line in lines:
+            base_line_price = OrderTaxedPricesData(
+                undiscounted_price=line.undiscounted_total_price,
+                price_with_discounts=TaxedMoney(
+                    line.base_unit_price, line.base_unit_price
+                )
+                * line.quantity,
+            )
+            taxed_line_total_data = self._calculate_order_line_total_price(
+                taxes_data,
+                order,
+                line.id,
+                base_line_price,
+            ).price_with_discounts
+            taxed_subtotal += taxed_line_total_data
+
+        base_shipping_price = base_order_calculations.base_order_shipping(order)
+        shipping_price = self._calculate_order_shipping(
+            order, taxes_data, base_shipping_price
+        )
+
+        discount_amount = zero_money(currency)
+        order_discount = order.discounts.filter(type=OrderDiscountType.MANUAL).first()
+        if order_discount:
+            discount_amount = order_discount.amount
+
+        taxed_total = taxed_subtotal + shipping_price - discount_amount
+
+        return max(
+            taxed_total,
+            zero_taxed_money(currency),
         )
 
     def get_checkout_line_tax_rate(
