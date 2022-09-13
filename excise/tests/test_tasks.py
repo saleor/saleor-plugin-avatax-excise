@@ -6,8 +6,13 @@ import pytest
 from saleor.order import OrderEvents
 
 from ..tasks import api_post_request_task
-from ..utils import (AvataxConfiguration, get_api_url, get_metadata_key,
-                     get_order_request_data, get_order_tax_data)
+from ..utils import (
+    AvataxConfiguration,
+    get_api_url,
+    get_metadata_key,
+    get_order_request_data,
+    get_order_tax_data,
+)
 
 config = AvataxConfiguration(
     username_or_account="test",
@@ -134,8 +139,7 @@ def test_api_post_request_task_with_valid_productcodes(
     )
 
     expected_event_msg = (
-        "Order committed to Avatax Excise. "
-        f"Order ID: {order_with_lines.id}"
+        "Order committed to Avatax Excise. " f"Order ID: {order_with_lines.id}"
     )
     assert order_with_lines.events.count() == 1
     event = order_with_lines.events.get()
@@ -143,9 +147,7 @@ def test_api_post_request_task_with_valid_productcodes(
     assert event.parameters["message"] == expected_event_msg
 
     order_with_lines.refresh_from_db()
-    taxes_metadata = order_with_lines.metadata.get(
-        get_metadata_key("itemized_taxes")
-    )
+    taxes_metadata = order_with_lines.metadata.get(get_metadata_key("itemized_taxes"))
 
     sales_tax = order_with_lines.metadata.get(get_metadata_key("sales_tax"))
     other_tax = order_with_lines.metadata.get(get_metadata_key("other_tax"))
@@ -189,15 +191,12 @@ def test_api_request_task_order_doesnt_have_any_lines_with_taxes_to_calculate(
     event = order_with_lines.events.get()
     assert event.type == OrderEvents.EXTERNAL_SERVICE_NOTIFICATION
     expected_msg = (
-        "The order doesn't have any line which should be "
-        "sent to Avatax Excise."
+        "The order doesn't have any line which should be " "sent to Avatax Excise."
     )
     assert event.parameters["message"] == expected_msg
 
 
-def test_api_request_task_order_empty_data(
-    order
-):
+def test_api_request_task_order_empty_data(order):
     # given
     request_data = {}
 
@@ -225,8 +224,7 @@ def test_api_request_task_order_empty_data(
     event = order.events.get()
     assert event.type == OrderEvents.EXTERNAL_SERVICE_NOTIFICATION
     expected_msg = (
-        "The order doesn't have any line which should be "
-        "sent to Avatax Excise."
+        "The order doesn't have any line which should be " "sent to Avatax Excise."
     )
     assert event.parameters["message"] == expected_msg
 

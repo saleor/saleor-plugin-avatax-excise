@@ -27,8 +27,7 @@ if TYPE_CHECKING:
     from saleor.channel.models import Channel
     from saleor.checkout.fetch import CheckoutInfo, CheckoutLineInfo
     from saleor.order.models import Order
-    from saleor.product.models import (ProductVariant,
-                                       ProductVariantChannelListing)
+    from saleor.product.models import ProductVariant, ProductVariantChannelListing
 
 logger = logging.getLogger(__name__)
 
@@ -137,9 +136,7 @@ def api_post_request(
 ) -> Dict[str, Any]:
     response = None
     try:
-        auth = HTTPBasicAuth(
-            config.username_or_account, config.password_or_license
-        )
+        auth = HTTPBasicAuth(config.username_or_account, config.password_or_license)
         headers = {
             "x-company-id": config.company_name,
             "Content-Type": "application/json",
@@ -153,15 +150,11 @@ def api_post_request(
         )
         logger.debug("Hit to Avatax Excise API with URL: %s", url)
         if response.status_code == 401:
-            logger.exception(
-                "Avatax Excise Authentication Error - Invalid Credentials"
-            )
+            logger.exception("Avatax Excise Authentication Error - Invalid Credentials")
             return {}
         json_response = response.json()
         if json_response.get("Status") == "Errors found":
-            logger.exception(
-                "Avatax Excise response contains errors %s", json_response
-            )
+            logger.exception("Avatax Excise response contains errors %s", json_response)
             return json_response
 
     except requests.exceptions.RequestException:
@@ -172,8 +165,7 @@ def api_post_request(
         if response:
             content = response.content
         logger.exception(
-            "Unable to decode the response from Avatax Excise. "
-            "Response: %s",
+            "Unable to decode the response from Avatax Excise. " "Response: %s",
             content,
         )
         return {}
@@ -191,7 +183,7 @@ def append_line_to_data(
     variant_channel_listing: "ProductVariantChannelListing",
     channel: "Channel",
     discounted: bool = False,
-    product_type: Optional["ProductType"] = None
+    product_type: Optional["ProductType"] = None,
 ):
     """
     Abstract line data regardless of Checkout or Order.
@@ -388,7 +380,7 @@ def get_checkout_lines_data(
             variant_channel_listing=line_info.channel_listing,
             channel=channel,
             discounted=discounted,
-            product_type=line_info.product_type
+            product_type=line_info.product_type,
         )
 
     if checkout_info.delivery_method_info.delivery_method:
@@ -530,9 +522,7 @@ def get_checkout_tax_data(
     data = generate_request_data_from_checkout(
         checkout_info, lines_info, config, discounts=discounts
     )
-    return get_cached_response_or_fetch(
-        data, str(checkout_info.checkout.token), config
-    )
+    return get_cached_response_or_fetch(data, str(checkout_info.checkout.token), config)
 
 
 def get_order_request_data(order: "Order", config=AvataxConfiguration):
@@ -604,9 +594,7 @@ def build_metadata(taxes_data: Dict[str, Dict]):
         get_metadata_key("itemized_taxes"): json.dumps(
             taxes_data.get("TransactionTaxes")
         ),
-        get_metadata_key("tax_transaction"): json.dumps(
-            taxes_data.get("Transaction")
-        ),
+        get_metadata_key("tax_transaction"): json.dumps(taxes_data.get("Transaction")),
         get_metadata_key("sales_tax"): get_sales_tax(taxes_data),
         get_metadata_key("other_tax"): get_other_tax(taxes_data),
     }
@@ -627,7 +615,7 @@ def process_checkout_metadata(
     metadata = build_metadata(taxes_data)
 
     if force_refresh or metadata_requires_update(metadata, data_cache_key):
-        checkout.refresh_from_db(fields=['metadata'])
+        checkout.refresh_from_db(fields=["metadata"])
         checkout.store_value_in_metadata(items=metadata)
         checkout.save()
         cache.set(data_cache_key, metadata, cache_time)
