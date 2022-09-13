@@ -504,6 +504,36 @@ def test_preprocess_order_creation_wrong_data(
     assert "No Scenario record found" in e._excinfo[1].args[0]
 
 
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
+@patch("saleor.plugins.avatax.excise.plugin.api_post_request_task.delay")
+def test_preprocess_order_creation_no_lines(
+    api_post_request_task_mock,
+    checkout,
+    address,
+    shipping_zone,
+    plugin_configuration,
+):
+    # given
+    plugin_configuration()
+    manager = get_plugins_manager()
+
+    checkout.shipping_address = address
+    checkout.save()
+
+    lines, _ = fetch_checkout_lines(checkout)
+    checkout_info = fetch_checkout_info(
+        checkout, lines, [], manager
+    )
+
+    # when
+    manager.preprocess_order_creation(checkout_info, [], lines)
+
+    # then
+    api_post_request_task_mock.assert_not_called()
+
+
 def test_api_post_request_handles_request_errors(product, monkeypatch):
     mocked_response = Mock(side_effect=RequestException())
     monkeypatch.setattr(
@@ -639,6 +669,26 @@ def test_order_created(
     order_with_lines.save()
 
     manager.order_created(order_with_lines)
+
+
+@override_settings(
+    PLUGINS=["saleor.plugins.avatax.excise.plugin.AvataxExcisePlugin"]
+)
+@patch("saleor.plugins.avatax.excise.plugin.api_post_request_task.delay")
+def test_order_created_no_lines(
+    api_post_request_task_mock,
+    order,
+    plugin_configuration,
+):
+    # given
+    plugin_configuration()
+    manager = get_plugins_manager()
+
+    # when
+    manager.order_created(order)
+
+    # then
+    api_post_request_task_mock.assert_not_called()
 
 
 @pytest.mark.vcr

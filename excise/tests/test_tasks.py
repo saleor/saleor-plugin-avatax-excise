@@ -7,7 +7,7 @@ from saleor.order import OrderEvents
 
 from ..tasks import api_post_request_task
 from ..utils import (AvataxConfiguration, get_api_url, get_metadata_key,
-                     get_order_request_data)
+                     get_order_request_data, get_order_tax_data)
 
 config = AvataxConfiguration(
     username_or_account="test",
@@ -193,3 +193,55 @@ def test_api_request_task_order_doesnt_have_any_lines_with_taxes_to_calculate(
         "sent to Avatax Excise."
     )
     assert event.parameters["message"] == expected_msg
+
+
+def test_api_request_task_order_empty_data(
+    order
+):
+    # given
+    request_data = {}
+
+    base_url = get_api_url(config.use_sandbox)
+    transaction_url = urljoin(
+        base_url,
+        "AvaTaxExcise/transactions/create",
+    )
+    commit_url = urljoin(
+        base_url,
+        "AvaTaxExcise/transactions/{}/commit",
+    )
+
+    # when
+    api_post_request_task(
+        transaction_url,
+        request_data,
+        asdict(config),
+        order.id,
+        commit_url,
+    )
+
+    # then
+    assert order.events.count() == 1
+    event = order.events.get()
+    assert event.type == OrderEvents.EXTERNAL_SERVICE_NOTIFICATION
+    expected_msg = (
+        "The order doesn't have any line which should be "
+        "sent to Avatax Excise."
+    )
+    assert event.parameters["message"] == expected_msg
+
+
+def test_get_order_request_data_order_without_lines(order):
+    # when
+    data = get_order_request_data(order, config)
+
+    # then
+    assert data == {}
+
+
+def test_get_order_tax_data_for_empty_data(order):
+    # when
+    data = get_order_tax_data(order, config)
+
+    # then
+    assert data is None

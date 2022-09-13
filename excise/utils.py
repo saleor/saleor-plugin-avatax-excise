@@ -422,6 +422,9 @@ def generate_request_data_from_checkout(
         discounts=discounts,
         discounted=discounted,
     )
+    # if there is no lines to sent we do not want to send the request to avalara
+    if not lines:
+        return {}
 
     data = generate_request_data(
         transaction_type,
@@ -507,6 +510,8 @@ def get_cached_response_or_fetch(
     Return cached response if requests data are the same.
     Fetch new data in other cases.
     """
+    if not data:
+        return None
     data_cache_key = CACHE_KEY + token_in_cache
     cached_data = cache.get(data_cache_key)
     if taxes_need_new_fetch(data, cached_data) or force_refresh:
@@ -535,6 +540,9 @@ def get_order_request_data(order: "Order", config=AvataxConfiguration):
     discounted = True if discount_total.amount > 0 else False
 
     lines = get_order_lines_data(order, discounted=discounted)
+    # if there is no lines to sent we do not want to send the request to avalara
+    if not lines:
+        return {}
     data = generate_request_data(
         transaction_type=TRANSACTION_TYPE,
         lines=lines,
@@ -552,7 +560,7 @@ def get_order_tax_data(
     response = get_cached_response_or_fetch(
         data, "order_%s" % order.id, config, force_refresh
     )
-    if response.get("Status") != "Success":
+    if response and response.get("Status") != "Success":
         transaction_errors = response.get("TransactionErrors")
         customer_msg = ""
         if isinstance(transaction_errors, list):

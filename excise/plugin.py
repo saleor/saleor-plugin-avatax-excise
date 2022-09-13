@@ -115,10 +115,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             for data in plugin_configuration.configuration
         }
         url = urljoin(get_api_url(conf["Use sandbox"]), "utilities/ping")
-        response = api_get_request(
-            url,
-            username_or_account=conf["Username or account"],
-            password_or_license=conf["Password or license"],
+        response = api_get_request(url, username_or_account=conf["Username or account"], password_or_license=conf["Password or license"],
         )
 
         if not response.get("authenticated"):
@@ -161,20 +158,14 @@ class AvataxExcisePlugin(AvataxPlugin):
         discounts: Iterable[DiscountInfo],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
-        if self._skip_plugin(previous_value):
-            logger.debug("Skip Plugin in Calculate Checkout Total")
-            return previous_value
         checkout_total = previous_value
 
-        if not _validate_checkout(checkout_info, lines):
-            logger.debug("Checkout Invalid in Calculate Checkout Total")
-            return checkout_total
-
-        taxes_data = get_checkout_tax_data(
-            checkout_info, lines, discounts, self.config
+        taxes_data = self._get_checkout_tax_data(
+            checkout_info, lines, discounts, checkout_total
         )
-        if not taxes_data or "Errors found" in taxes_data["Status"]:
-            return previous_value
+        if not taxes_data:
+            return checkout_total
+    
         process_checkout_metadata(taxes_data, checkout_info.checkout)
 
         checkout = checkout_info.checkout
@@ -240,16 +231,10 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not charge_taxes_on_shipping():
             return previous_value
 
-        if self._skip_plugin(previous_value):
-            return previous_value
-
-        if not _validate_checkout(checkout_info, lines):
-            return previous_value
-
-        taxes_data = get_checkout_tax_data(
-            checkout_info, lines, discounts, self.config
+        taxes_data = self._get_checkout_tax_data(
+            checkout_info, lines, discounts, previous_value
         )
-        if not taxes_data or "error" in taxes_data:
+        if not taxes_data:
             return previous_value
         process_checkout_metadata(taxes_data, checkout_info.checkout)
 
@@ -285,8 +270,9 @@ class AvataxExcisePlugin(AvataxPlugin):
             transaction_type=TRANSACTION_TYPE,
             discounts=discounts,
         )
-        if not data.TransactionLines:
+        if not data or not data.TransactionLines:
             return previous_value
+
         transaction_url = urljoin(
             get_api_url(self.config.use_sandbox),
             "AvaTaxExcise/transactions/create",
@@ -324,6 +310,8 @@ class AvataxExcisePlugin(AvataxPlugin):
             return previous_value
 
         request_data = get_order_request_data(order, self.config)
+        if not request_data:
+            return previous_value
         base_url = get_api_url(self.config.use_sandbox)
         transaction_url = urljoin(
             base_url,
@@ -359,19 +347,13 @@ class AvataxExcisePlugin(AvataxPlugin):
         discounts: Iterable["DiscountInfo"],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
-        if self._skip_plugin(previous_value):
-            return previous_value
-
         if not checkout_line_info.product.charge_taxes:
             return previous_value
 
-        if not _validate_checkout(checkout_info, lines):
-            return previous_value
-
-        taxes_data = get_checkout_tax_data(
-            checkout_info, lines, discounts, self.config
+        taxes_data = self._get_checkout_tax_data(
+            checkout_info, lines, discounts, previous_value
         )
-        if not taxes_data or "Errors found" in taxes_data["Status"]:
+        if not taxes_data:
             return previous_value
         process_checkout_metadata(taxes_data, checkout_info.checkout)
         return self._calculate_checkout_line_total_price(
@@ -432,6 +414,8 @@ class AvataxExcisePlugin(AvataxPlugin):
             )
 
         taxes_data = self._get_order_tax_data(order, previous_value)
+        if not taxes_data:
+            return previous_value
         return self._calculate_order_line_total_price(
             taxes_data, order, order_line.id, previous_value
         )
@@ -498,6 +482,8 @@ class AvataxExcisePlugin(AvataxPlugin):
 
         quantity = order_line.quantity
         taxes_data = self._get_order_tax_data(order, previous_value)
+        if not taxes_data:
+            return previous_value
         default_total = OrderTaxedPricesData(
             price_with_discounts=previous_value.price_with_discounts * quantity,
             undiscounted_price=previous_value.undiscounted_price * quantity,
@@ -523,7 +509,9 @@ class AvataxExcisePlugin(AvataxPlugin):
         if not _validate_order(order):
             return zero_taxed_money(order.total.currency)
 
-        taxes_data = get_order_tax_data(order, self.config, False)
+        taxes_data = self._get_order_tax_data(order, previous_value)
+        if not taxes_data:
+            return previous_value
         tax_lines = taxes_data.get("TransactionTaxes", [])
         if not tax_lines:
             return previous_value
@@ -539,13 +527,9 @@ class AvataxExcisePlugin(AvataxPlugin):
         lines: Iterable["OrderLine"],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
-        if self._skip_plugin(previous_value):
+        taxes_data = self._get_order_tax_data(order, previous_value)
+        if not taxes_data:
             return previous_value
-        order_total = previous_value
-        if not _validate_order(order):
-            return order_total
-
-        taxes_data = get_order_tax_data(order, self.config, False)
 
         currency = order.currency
         taxed_subtotal = zero_taxed_money(currency)
