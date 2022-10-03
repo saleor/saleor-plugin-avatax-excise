@@ -550,7 +550,7 @@ class AvataxExcisePlugin(AvataxPlugin):
             ).price_with_discounts
             taxed_subtotal += taxed_line_total_data
 
-        base_shipping_price = base_order_calculations.base_order_shipping(order)
+        base_shipping_price = order.base_shipping_price
         shipping_price = self._calculate_order_shipping(
             order, taxes_data, base_shipping_price
         )

@@ -14,10 +14,8 @@ from saleor.checkout.fetch import fetch_checkout_info, fetch_checkout_lines
 from saleor.checkout.utils import add_variant_to_checkout
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import TaxError
-from saleor.order.models import OrderLine
 from saleor.plugins.manager import get_plugins_manager
 from saleor.plugins.models import PluginConfiguration
-from saleor.product.models import ProductVariant
 
 from ..plugin import AvataxExcisePlugin
 from ..utils import (
@@ -804,6 +802,7 @@ def test_calculate_order_total(
     order.billing_address = address_usa_va
     order.shipping_method_name = method.name
     order.shipping_method = method
+    order.base_shipping_price = method.channel_listings.get(channel=order.channel).price
     order.save()
 
     total_price = manager.calculate_order_total(order, order.lines.all())
