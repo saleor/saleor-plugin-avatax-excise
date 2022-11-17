@@ -12,7 +12,6 @@ from saleor.checkout import base_calculations
 from saleor.core.prices import quantize_price
 from saleor.core.taxes import (
     TaxError,
-    charge_taxes_on_shipping,
     zero_taxed_money,
     zero_money,
 )
@@ -230,9 +229,6 @@ class AvataxExcisePlugin(AvataxPlugin):
         discounts: List["DiscountInfo"],
         previous_value: TaxedMoney,
     ) -> TaxedMoney:
-        if not charge_taxes_on_shipping():
-            return previous_value
-
         taxes_data = self._get_checkout_tax_data(
             checkout_info, lines, discounts, previous_value
         )
@@ -503,9 +499,6 @@ class AvataxExcisePlugin(AvataxPlugin):
         self, order: "Order", previous_value: TaxedMoney
     ) -> TaxedMoney:
         if self._skip_plugin(previous_value):
-            return previous_value
-
-        if not charge_taxes_on_shipping():
             return previous_value
 
         if not _validate_order(order):
