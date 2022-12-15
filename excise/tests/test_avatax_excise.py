@@ -156,10 +156,10 @@ def test_calculate_checkout_line_total(
     )
 
     checkout_with_item.refresh_from_db()
-    taxes_metadata = checkout_with_item.metadata.get(get_metadata_key("itemized_taxes"))
+    taxes_metadata = checkout_with_item.metadata_storage.metadata.get(get_metadata_key("itemized_taxes"))
 
-    sales_tax = checkout_with_item.metadata.get(get_metadata_key("sales_tax"))
-    other_tax = checkout_with_item.metadata.get(get_metadata_key("other_tax"))
+    sales_tax = checkout_with_item.metadata_storage.metadata.get(get_metadata_key("sales_tax"))
+    other_tax = checkout_with_item.metadata_storage.metadata.get(get_metadata_key("other_tax"))
 
     assert taxes_metadata is not None
     assert len(taxes_metadata) > 0
@@ -274,10 +274,10 @@ def test_calculate_checkout_shipping(
     )
 
     checkout_with_item.refresh_from_db()
-    taxes_metadata = checkout_with_item.metadata.get(get_metadata_key("itemized_taxes"))
+    taxes_metadata = checkout_with_item.metadata_storage.metadata.get(get_metadata_key("itemized_taxes"))
 
-    sales_tax = checkout_with_item.metadata.get(get_metadata_key("sales_tax"))
-    other_tax = checkout_with_item.metadata.get(get_metadata_key("other_tax"))
+    sales_tax = checkout_with_item.metadata_storage.metadata.get(get_metadata_key("sales_tax"))
+    other_tax = checkout_with_item.metadata_storage.metadata.get(get_metadata_key("other_tax"))
 
     assert taxes_metadata is not None
     assert len(taxes_metadata) > 0
