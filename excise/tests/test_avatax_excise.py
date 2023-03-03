@@ -192,6 +192,7 @@ def test_calculate_checkout_total(
     address_usa_va,
     address_usa,
     site_settings,
+    voucher,
     monkeypatch,
     plugin_configuration,
     non_default_category,
@@ -215,6 +216,7 @@ def test_calculate_checkout_total(
 
     voucher_amount = Money(voucher_amount, "USD")
     checkout_with_item.shipping_method = shipping_zone.shipping_methods.get()
+    checkout_with_item.voucher_code = voucher.code
     checkout_with_item.discount = voucher_amount
     checkout_with_item.save()
 
