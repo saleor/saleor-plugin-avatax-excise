@@ -17,7 +17,6 @@ from requests.auth import HTTPBasicAuth
 from saleor.checkout import base_calculations
 from saleor.checkout.models import Checkout
 from saleor.core.taxes import TaxError
-from saleor.checkout.utils import get_or_create_checkout_metadata
 from saleor.order.utils import get_total_order_discount
 from saleor.plugins.avatax import CACHE_KEY, CACHE_TIME, taxes_need_new_fetch
 from saleor.shipping.models import ShippingMethodChannelListing
@@ -616,10 +615,9 @@ def process_checkout_metadata(
     metadata = build_metadata(taxes_data)
 
     if force_refresh or metadata_requires_update(metadata, data_cache_key):
-        checkout_metadata = get_or_create_checkout_metadata(checkout)
-        checkout_metadata.refresh_from_db(fields=["metadata"])
-        checkout_metadata.store_value_in_metadata(items=metadata)
-        checkout_metadata.save()
+        checkout.refresh_from_db(fields=["metadata"])
+        checkout.store_value_in_metadata(items=metadata)
+        checkout.save()
         cache.set(data_cache_key, metadata, cache_time)
 
 
